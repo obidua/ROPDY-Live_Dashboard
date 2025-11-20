@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import StatCard from '../components/StatCard';
 import BlockchainAnimation from '../components/BlockchainAnimation';
 import AddressDisplay from '../components/AddressDisplay';
+import RamaLoader from '../components/RamaLoader';
 import { useStore } from '../Store/UserStore';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useNavigate } from 'react-router-dom';
@@ -76,6 +77,8 @@ const Purchase = () => {
 
   const [packages, setPackages] = useState([]);
   const [activePkg, setActivePkg] = useState();
+  const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
 
   // const packages = [
@@ -123,6 +126,8 @@ const Purchase = () => {
 
   useEffect(() => {
     const fetchPurchaseData = async () => {
+      setLoading(true);
+      const startTime = Date.now();
       try {
         const response = await purchaseInfo(userAddress);
 
@@ -135,6 +140,10 @@ const Purchase = () => {
       } catch (error) {
         console.log(error)
         console.error("Error fetching purchase data:", error);
+      } finally {
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(800 - elapsedTime, 0);
+        setTimeout(() => setLoading(false), remainingTime);
       }
     }
 
@@ -187,30 +196,45 @@ const Purchase = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getPurchaseHistory(userAddress);
+      setHistoryLoading(true);
+      const startTime = Date.now();
+      try {
+        const res = await getPurchaseHistory(userAddress);
 
-      const allData = [];
+        const allData = [];
 
-      res.forEach((pkg) => {
-        const { pkgName, recievedPkg } = pkg;
+        if (res && Array.isArray(res)) {
+          res.forEach((pkg) => {
+            const { pkgName, recievedPkg } = pkg;
 
-        recievedPkg.forEach((entry, index) => {
-          allData.push({
-            srNo: allData.length + 1,
-            package: pkgName,
-            index: entry.index?.toString(),
-            paymentCount: entry.paymentCount?.toString(),
-            isCompleted: entry.isCompleted ? 'Completed' : 'Pending',
-            createdAt: new Date(Number(entry.createdAt) * 1000).toLocaleString(),
-            completedAt: entry.isCompleted ? new Date(Number(entry.completedAt) * 1000).toLocaleString() : '-',
-            paymentInCount: entry.paymentsIn?.length || 0,
-            paymentOutCount: entry.paymentsOut?.length || 0,
-            txHash: entry.paymentsOut?.[0]?.txHash || '',
+            if (recievedPkg && Array.isArray(recievedPkg)) {
+              recievedPkg.forEach((entry, index) => {
+                allData.push({
+                  srNo: allData.length + 1,
+                  package: pkgName,
+                  index: entry.index?.toString(),
+                  paymentCount: entry.paymentCount?.toString(),
+                  isCompleted: entry.isCompleted ? 'Completed' : 'Pending',
+                  createdAt: new Date(Number(entry.createdAt) * 1000).toLocaleString(),
+                  completedAt: entry.isCompleted ? new Date(Number(entry.completedAt) * 1000).toLocaleString() : '-',
+                  paymentInCount: entry.paymentsIn?.length || 0,
+                  paymentOutCount: entry.paymentsOut?.length || 0,
+                  txHash: entry.paymentsOut?.[0]?.txHash || '',
+                });
+              });
+            }
           });
-        });
-      });
+        }
 
-      setHistoryData(allData);
+        setHistoryData(allData);
+      } catch (error) {
+        console.error("Error fetching history:", error);
+        setHistoryData([]);
+      } finally {
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(800 - elapsedTime, 0);
+        setTimeout(() => setHistoryLoading(false), remainingTime);
+      }
     };
 
     if (userAddress) fetchData();
@@ -239,6 +263,10 @@ const Purchase = () => {
 
     if (userAddress) fetchRamaprice();
   }, [])
+
+  if (loading) {
+    return <RamaLoader message="Loading purchase data..." />;
+  }
 
   return (
     <div className="relative min-h-screen">
@@ -283,13 +311,18 @@ const Purchase = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-white/70 dark:bg-gray-800/50">
-                <tr>
-                  {['Sr. No', 'Package', 'Index', 'Status', 'Created', 'Completed', 'IN', 'OUT'].map((heading, idx) => (
-                    <th key={idx} className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">{heading}</th>
-                  ))}
+          {historyLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <RamaLoader message="Loading purchase history..." />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-white/70 dark:bg-gray-800/50">
+                  <tr>
+                    {['Sr. No', 'Package', 'Index', 'Status', 'Created', 'Completed', 'IN', 'OUT'].map((heading, idx) => (
+                      <th key={idx} className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">{heading}</th>
+                    ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -329,7 +362,8 @@ const Purchase = () => {
                 )}
               </tbody>
             </table>
-          </div>
+            </div>
+          )}
         </div>
 
 
