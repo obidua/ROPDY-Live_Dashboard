@@ -787,65 +787,104 @@ export const useStore = create((set, get) => ({
 
   getOverView: async (address, level) => {
     try {
-      const { abi, contractAddress } = await fetchContractAbi("ROPDY_VIEW");
-      const contract = new web3.eth.Contract(abi, contractAddress);
-
-      // Step 1: First fetch to get totalPages
-      const initialRes = await contract.methods
-        .getDownlinesWithBasicInfoAndPackagesAtLevel(address, level + 1)
-        .call();
-
-      console.log("initialRes", initialRes);
-
-      if (initialRes.result.length == 0) {
+      // Validate inputs
+      if (!address || typeof level !== 'number') {
+        console.warn("Invalid inputs for getOverView");
         return {
           downlines: [],
           totalPages: 0,
         };
       }
 
-      if (level == 0) {
-        const parseLevel1 = initialRes.result[0].downlines.map((item, idx) => ({
-          index: idx + 1,
-          wallet: item.wallet,
-          userId: Number(item.userId),
-          level: Number(item.level),
-          registrationTime: Number(item.registrationTime),
-          earnings: 0,
-        }));
+      const { abi: rootAbi, contractAddress: rootAddress } = await fetchContractAbi("ROPDY_ROOT");
+      const rootContract = new web3.eth.Contract(rootAbi, rootAddress);
 
-        return {
-          downlines: parseLevel1,
-          totalPages: 0,
-        };
-      }
+      // Helper function to get downlines recursively
+      const getDownlinesAtLevel = async (parentAddress, targetLevel, currentLevel = 0) => {
+        try {
+          const directReferrals = await rootContract.methods
+            .getDirectReferrals(parentAddress)
+            .call();
 
-      // For only level one
-      // Step 3: Format the full downline list
+          if (!Array.isArray(directReferrals) || directReferrals.length === 0) {
+            return [];
+          }
 
-      const parsedDownlines = initialRes.result.flatMap((item, i) =>
-        item.downlines.map((dl, j) => ({
-          index: `${i + 1}.${j + 1}`,
-          wallet: dl.wallet,
-          userId: Number(dl.userId),
-          level: Number(dl.level),
-          registrationTime: Number(dl.registrationTime),
-          earnings: 0,
-        }))
-      );
+          // If this is the target level, return these downlines
+          if (currentLevel === targetLevel) {
+            console.log(`✅ Found ${directReferrals.length} downlines at Level ${targetLevel + 1}`);
+            
+            // Fetch detailed user info for each downline
+            const downlinesWithInfo = await Promise.all(
+              directReferrals.map(async (wallet, idx) => {
+                try {
+                  const userInfo = await rootContract.methods.users(wallet).call();
+                  
+                  return {
+                    index: idx + 1,
+                    wallet: wallet,
+                    userId: Number(userInfo.id || 0),
+                    level: targetLevel + 1,
+                    registrationTime: Number(userInfo.registrationTime || 0),
+                    earnings: 0,
+                  };
+                } catch (err) {
+                  console.warn(`Failed to get info for ${wallet}:`, err);
+                  return {
+                    index: idx + 1,
+                    wallet: wallet,
+                    userId: 0,
+                    level: targetLevel + 1,
+                    registrationTime: 0,
+                    earnings: 0,
+                  };
+                }
+              })
+            );
+
+            return downlinesWithInfo;
+          }
+
+          // Otherwise, recursively get downlines from each referral
+          const allDownlines = [];
+          for (const referral of directReferrals) {
+            const subDownlines = await getDownlinesAtLevel(referral, targetLevel, currentLevel + 1);
+            allDownlines.push(...subDownlines);
+          }
+
+          return allDownlines;
+        } catch (error) {
+          console.warn(`Error getting downlines at level ${currentLevel}:`, error);
+          return [];
+        }
+      };
+
+      // Fetch downlines at the requested level
+      const downlines = await getDownlinesAtLevel(address, level);
+
+      console.log(`✅ Total downlines for Level ${level + 1}:`, downlines.length);
+
       return {
-        downlines: parsedDownlines,
-        totalPages: 0,
+        downlines: downlines,
+        totalPages: 1,
       };
     } catch (error) {
-      console.error("Error fetching getOverView:", error);
-      alert(`Error fetching getOverView: ${error.message}`);
+      console.error("❌ Error in getOverView:", error);
       return { downlines: [], totalPages: 0 };
     }
   },
 
   getOverViewBasicInfo: async (address) => {
     try {
+      // Validate address
+      if (!address) {
+        console.warn("No address provided for getOverViewBasicInfo");
+        return {
+          totalDownline: "0",
+          directReferral: "0",
+        };
+      }
+
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_ROOT");
       const contract = new web3.eth.Contract(abi, contractAddress);
 
@@ -864,7 +903,11 @@ export const useStore = create((set, get) => ({
       };
     } catch (error) {
       console.error("Error fetching getOverViewinfo:", error);
-      alert(`Error fetching getOverViewinfo: ${error.message}`);
+      // Return default values instead of showing alert
+      return {
+        totalDownline: "0",
+        directReferral: "0",
+      };
     }
   },
 
@@ -990,14 +1033,27 @@ export const useStore = create((set, get) => ({
 
   CircleInfo: async (userAddress) => {
     try {
+      if (!userAddress) {
+        console.warn("No user address provided for CircleInfo");
+        return {
+          pendingCircle: 0,
+          completeCircle: 0,
+          totalCircle: 0,
+        };
+      }
+
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_VIEW");
       const contract = new web3.eth.Contract(abi, contractAddress);
 
-      // Fetch history for all 5 packages
+      // Fetch history for all 5 packages with error handling
       const promises = [];
       for (let i = 0; i < 5; i++) {
         promises.push(
           contract.methods.getAllCirclePurchaseHistory(userAddress, i).call()
+            .catch(err => {
+              console.warn(`Failed to fetch circle history for package ${i}:`, err.message);
+              return []; // Return empty array if this package fails
+            })
         );
       }
 
@@ -1008,13 +1064,15 @@ export const useStore = create((set, get) => ({
       let completeCircle = 0;
 
       results.forEach((packageHistory) => {
-        packageHistory.forEach((circle) => {
-          if (circle?.isCompleted) {
-            completeCircle++;
-          } else {
-            pendingCircle++;
-          }
-        });
+        if (Array.isArray(packageHistory)) {
+          packageHistory.forEach((circle) => {
+            if (circle?.isCompleted) {
+              completeCircle++;
+            } else {
+              pendingCircle++;
+            }
+          });
+        }
       });
 
       const data = {
@@ -1027,7 +1085,12 @@ export const useStore = create((set, get) => ({
       return data;
     } catch (error) {
       console.error("❌ Error in CircleInfo:", error);
-      throw new Error("Failed to fetch circle info");
+      // Return default values instead of throwing
+      return {
+        pendingCircle: 0,
+        completeCircle: 0,
+        totalCircle: 0,
+      };
     }
   },
 

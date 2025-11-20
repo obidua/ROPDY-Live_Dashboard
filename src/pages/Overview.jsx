@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import StatCard from '../components/StatCard';
 import BlockchainAnimation from '../components/BlockchainAnimation';
+import RamaLoader from '../components/RamaLoader';
 import { useStore } from '../Store/UserStore';
 
 const Overview = () => {
@@ -17,20 +18,28 @@ const Overview = () => {
 
   useEffect(() => {
     const fetchOverview = async () => {
-      if (!userAddress) return;
+      if (!userAddress) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
-        const pageSize = 10;
-        const result = await getOverview(userAddress, selectedLevel, currentPage, pageSize);
+        // Add a minimum delay to show loader
+        const [result] = await Promise.all([
+          getOverview(userAddress, selectedLevel),
+          new Promise(resolve => setTimeout(resolve, 800)) // Min 800ms loading
+        ]);
+        
         console.log("result", result);
 
-        // ✅ FIXED: use direct object structure, not array indexing
-        setLoading(false);
         const downlines = result?.downlines || [];
         setOverviewData(downlines);
         setTotalPages(result?.totalPages || 1);
       } catch (err) {
         console.error('Overview fetch error:', err);
+        setOverviewData([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -43,15 +52,21 @@ const Overview = () => {
 
   const [basicData, setBasicData] = useState();
   useEffect(() => {
-    setLoading(true);
+    if (!userAddress) {
+      return;
+    }
     const basinfo = async () => {
-      const res = await getOverViewBasicInfo(userAddress);
-      console.log("---->", res)
-      setLoading(false);
-      setBasicData(res)
+      try {
+        const res = await getOverViewBasicInfo(userAddress);
+        console.log("---->", res)
+        setBasicData(res)
+      } catch (err) {
+        console.error('Basic info fetch error:', err);
+        setBasicData({ directReferral: 0, totalDownline: 0 });
+      }
     }
     basinfo();
-  }, [])
+  }, [userAddress])
 
 
   return (
@@ -59,6 +74,15 @@ const Overview = () => {
       <BlockchainAnimation />
       <div className="relative p-6">
         <h1 className="text-2xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-6">📈 Overview</h1>
+
+        {/* Show message if not connected */}
+        {!userAddress && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6">
+            <p className="text-yellow-500 text-center">
+              ⚠️ Please connect your wallet to view overview data
+            </p>
+          </div>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -88,45 +112,46 @@ const Overview = () => {
 
         {/* Downline Table */}
         <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm rounded-lg p-4 border border-admin-new-green/30 overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead>
-              <tr className="bg-white/70 dark:bg-gray-800/50">
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Sno</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Wallet</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">User ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Level</th>
-                {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Earnings (RAMA)</th> */}
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Joined</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {!loading ? (
-
-                overviewData.length !== 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <RamaLoader />
+              <p className="mt-4 text-gray-600 dark:text-gray-300 text-sm">Loading downline data...</p>
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead>
+                <tr className="bg-white/70 dark:bg-gray-800/50">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Sno</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Wallet</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">User ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Level</th>
+                  {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Earnings (RAMA)</th> */}
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Joined</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {overviewData.length > 0 ? (
                   overviewData.map((entry, idx) => (
                     <tr key={idx}>
                       <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-white text-sm">{idx + 1}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-white text-sm">{entry?.wallet}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-white text-sm">{entry?.userId}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-white text-sm">{entry?.level}</td>
-
-                      <td className="px-4 py-3 whitespace-nowrap text-gray-600  dark:text-white  text-sm">
-                        {new Date(parseInt(entry?.registrationTime
-                        ) * 1000).toLocaleDateString()}
+                      <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-white text-sm">
+                        {new Date(parseInt(entry?.registrationTime) * 1000).toLocaleDateString()}
                       </td>
                     </tr>
                   ))
                 ) : (
-                  <td className="px-4 py-3 whitespace-nowrap text-white text-sm">No Data Found</td>
-                )
-
-              ) : (
-                <tr>
-                  <td className="px-4 py-3 whitespace-nowrap text-white text-sm">Loading...</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  <tr>
+                    <td colSpan="5" className="px-4 py-3 text-center text-gray-600 dark:text-white text-sm">
+                      No Data Found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Pagination */}
