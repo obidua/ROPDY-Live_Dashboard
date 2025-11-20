@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import StatCard from '../components/StatCard';
 import BlockchainAnimation from '../components/BlockchainAnimation';
 import AddressDisplay from '../components/AddressDisplay';
+import NotificationModal from '../components/NotificationModal';
+import { useNotification } from '../hooks/useNotification';
 import { useStore } from '../Store/UserStore';
 
 const Profile = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [profileData, setProfileData] = useState(null);
+  const { notification, closeNotification, showInfo } = useNotification();
 
   const userAddress = React.useMemo(() => {
     try {
@@ -62,13 +65,23 @@ const Profile = () => {
         console.error('Error sharing:', error);
       }
     } else {
-      alert('Sharing not supported on this device. Please use the "Copy Link" button instead.');
+      showInfo('Share Not Supported', 'Sharing is not supported on this device. Please use the "Copy Link" button instead.');
     }
   };
 
   return (
     <div className="relative min-h-screen">
       <BlockchainAnimation />
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={closeNotification}
+        title={notification.title}
+        message={notification.message}
+        type={notification.type}
+        autoClose={notification.autoClose}
+        autoCloseDuration={notification.autoCloseDuration}
+        actions={notification.actions}
+      />
       <div className="relative p-4 sm:p-6">
         <h1 className="text-2xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-6">👤 Profile</h1>
 

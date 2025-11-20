@@ -3,6 +3,8 @@ import StatCard from '../components/StatCard';
 import BlockchainAnimation from '../components/BlockchainAnimation';
 import AddressDisplay from '../components/AddressDisplay';
 import RamaLoader from '../components/RamaLoader';
+import NotificationModal from '../components/NotificationModal';
+import { useNotification } from '../hooks/useNotification';
 import { useStore } from '../Store/UserStore';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useNavigate } from 'react-router-dom';
@@ -30,6 +32,7 @@ const PackageCard = ({ name, usdPrice, required, index, onPurchase }) => (
 const Purchase = () => {
 
   const [walletBalance, setWalletBalance] = useState(0);
+  const { notification, closeNotification, showError } = useNotification();
 
   const { address, isConnected } = useAppKitAccount();
   const [trxData, setTrxData] = useState();
@@ -37,14 +40,12 @@ const Purchase = () => {
 
   const { handleSendTx, hash } = useTransaction(trxData !== null && trxData);
 
-
-
   useEffect(() => {
     if (trxData) {
       try {
         handleSendTx(trxData);
       } catch (error) {
-        alert("somthing went Wrong");
+        showError('Error', 'Something went wrong during transaction. Please try again.');
       }
     }
   }, [trxData]);
@@ -371,6 +372,16 @@ const Purchase = () => {
   return (
     <div className="relative min-h-screen">
       <BlockchainAnimation />
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={closeNotification}
+        title={notification.title}
+        message={notification.message}
+        type={notification.type}
+        autoClose={notification.autoClose}
+        autoCloseDuration={notification.autoCloseDuration}
+        actions={notification.actions}
+      />
       <div className="relative p-4 sm:p-6">
         <h1 className="text-2xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-6">🛒 Purchase Circle</h1>
 

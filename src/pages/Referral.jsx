@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import BlockchainAnimation from "../components/BlockchainAnimation";
 import StatCard from "../components/StatCard";
+import NotificationModal from "../components/NotificationModal";
+import { useNotification } from "../hooks/useNotification";
 import { useStore } from "../Store/UserStore";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { useTransaction } from "../config/register";
@@ -10,6 +12,7 @@ import { Spinner } from "../utils/helpingAnimation";
 
 const Referral = () => {
   const [countdown, setCountdown] = useState(15);
+  const { notification, closeNotification, showError, showWarning } = useNotification();
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -36,7 +39,7 @@ const Referral = () => {
         handleSendTx(trxData);
       } catch (error) {
         setLoading(false);
-        alert("somthing went Wrong");
+        showError('Error', 'Something went wrong during registration. Please try again.');
       }
     }
   }, [trxData]);
@@ -94,7 +97,7 @@ const Referral = () => {
         setTrxData(res);
       } else {
         setLoading(false);
-        alert("Connect yout Wallet First");
+        showWarning('Wallet Not Connected', 'Please connect your wallet first to proceed with registration.');
       }
     } catch (error) {
       setLoading(false);
@@ -195,6 +198,16 @@ const Referral = () => {
   return (
     <div className="relative min-h-screen">
       <BlockchainAnimation />
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={closeNotification}
+        title={notification.title}
+        message={notification.message}
+        type={notification.type}
+        autoClose={notification.autoClose}
+        autoCloseDuration={notification.autoCloseDuration}
+        actions={notification.actions}
+      />
       <div className="relative p-6">
         <div className="max-w-4xl mx-auto">
           <div className="w-full flex flex-wrap justify-between items-center gap-4 mb-6">
