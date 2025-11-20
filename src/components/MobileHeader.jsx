@@ -1,4 +1,5 @@
 import React from 'react';
+import RopdyLogo from './RopdyLogo';
 
 const MobileHeader = ({ 
   isConnected,
@@ -8,9 +9,12 @@ const MobileHeader = ({
   return (
     <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/50 dark:bg-black/50 backdrop-blur-sm border-b border-admin-gold-900/50 px-4 py-3">
       <div className="flex items-center justify-between">
-        <span className="text-xl font-bold tracking-wide text-admin-cyan dark:text-admin-cyan-dark">
-          ⚡ ROPDY
-        </span>
+        <div className="flex items-center gap-2">
+          <RopdyLogo size={40} />
+          <span className="text-lg font-bold tracking-wide text-admin-cyan dark:text-admin-cyan-dark">
+            ROPDY
+          </span>
+        </div>
         <div className="flex items-center gap-3">
           {isConnected && (
             <span className="relative flex h-2 w-2">

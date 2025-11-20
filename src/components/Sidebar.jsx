@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import MobileHeader from './MobileHeader';
 import AddressDisplay from './AddressDisplay';
+import RopdyLogo from './RopdyLogo';
 import { useAppKit, useAppKitAccount, useDisconnect } from '@reown/appkit/react';
 import { useStore } from "../Store/UserStore";
 
@@ -181,10 +182,13 @@ const Sidebar = () => {
       <aside className={`w-64 h-screen bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm text-gray-900 dark:text-gray-100 shadow-lg fixed border-r border-admin-gold-900/50 transition-transform duration-300 z-50 flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
         <div className="p-4 border-b border-admin-gold-900/50 bg-white/50 dark:bg-black/50 backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <span className="text-xl font-bold tracking-wide text-admin-cyan dark:text-admin-cyan-dark">
-              ⚡ ROPDY
-            </span>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <RopdyLogo size={48} />
+              <span className="text-lg font-bold tracking-wide text-admin-cyan dark:text-admin-cyan-dark hidden sm:inline">
+                ROPDY
+              </span>
+            </div>
             {isActive && (address == userAddress) ? (
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
