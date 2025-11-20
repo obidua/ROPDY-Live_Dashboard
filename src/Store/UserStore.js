@@ -978,12 +978,30 @@ export const useStore = create((set, get) => ({
 
       for (let i = 0; i < 5; i++) {
         try {
-          const buyedPkg = await contract.methods
-            .getAllCirclePurchaseHistory(address, i)
-            .call();
+          let buyedPkg = [];
+          
+          // Try getAllCirclePurchaseHistory first
+          try {
+            buyedPkg = await contract.methods
+              .getAllCirclePurchaseHistory(address, i)
+              .call();
+          } catch (err) {
+            console.warn(`getAllCirclePurchaseHistory failed for package ${i}, trying alternative methods...`);
+            
+            // Try getUserPurchaseHistory as alternative
+            try {
+              buyedPkg = await contract.methods
+                .getUserPurchaseHistory(address, i)
+                .call();
+            } catch (err2) {
+              console.warn(`getUserPurchaseHistory also failed for package ${i}`);
+              buyedPkg = [];
+            }
+          }
+
           pkgData.push({
             pkgName: packagesTag[i].name,
-            recievedPkg: buyedPkg,
+            recievedPkg: Array.isArray(buyedPkg) ? buyedPkg : [],
           });
         } catch (pkgError) {
           console.warn(`Failed to fetch history for package ${i}:`, pkgError.message);
@@ -994,18 +1012,18 @@ export const useStore = create((set, get) => ({
         }
       }
 
-      console.log(pkgData);
+      console.log("✅ Purchase History Data:", pkgData);
 
       return pkgData;
     } catch (error) {
-      console.error("Error fetching getPackageWiseData:", error);
+      console.error("Error fetching getPurchaseHistory:", error);
       // Return empty array for each package instead of throwing
       return [
-        { pkgName: packagesTag[0].name, recievedPkg: [] },
-        { pkgName: packagesTag[1].name, recievedPkg: [] },
-        { pkgName: packagesTag[2].name, recievedPkg: [] },
-        { pkgName: packagesTag[3].name, recievedPkg: [] },
-        { pkgName: packagesTag[4].name, recievedPkg: [] },
+        { pkgName: "Starter", recievedPkg: [] },
+        { pkgName: "Silver", recievedPkg: [] },
+        { pkgName: "Gold", recievedPkg: [] },
+        { pkgName: "Platinum", recievedPkg: [] },
+        { pkgName: "Diamond", recievedPkg: [] },
       ];
     }
   },
