@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Waves, ChevronLeft, ChevronRight, X, TrendingUp, Users, Award, Trophy, Gift, Shield, Zap, DollarSign, Target, CheckCircle, BarChart3, PieChart, Wallet, Lock, Globe, ArrowRight, AlertCircle, Maximize, Minimize, Play, Pause, Coins, Building2, CreditCard, Smartphone, Blocks, Code, FileText, Network, Layers, Repeat, CircleDollarSign } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, TrendingUp, Users, Award, Trophy, Gift, Shield, Zap, DollarSign, Target, CheckCircle, BarChart3, PieChart, Wallet, Lock, Globe, ArrowRight, AlertCircle, Maximize, Minimize, Play, Pause, Coins, Building2, CreditCard, Smartphone, Blocks, Code, FileText, Network, Layers, Repeat, CircleDollarSign } from 'lucide-react';
 import TokenomicsComparison from '../components/TokenomicsComparison';
+import LogoCircleImage from '../components/LogoCircleImage';
 
 function RopdyPresentation() {
   const navigate = useNavigate();
@@ -12,9 +13,15 @@ function RopdyPresentation() {
       subtitle: "Ramestta On-Chain Passive Dynamic Yield",
       content: (
         <div className="space-y-2 md:space-y-6 text-center">
-          <div className="w-16 h-16 md:w-32 md:h-32 bg-gradient-to-br from-cyan-500 to-green-400 rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto animate-glow-pulse animate-scale-in">
-            <Waves className="text-dark-950" size={32} />
+          {/* Logo Image */}
+          <div className="flex justify-center mb-4 md:mb-8">
+            <img 
+              src="/ropdyfull.png" 
+              alt="ROPDY Logo" 
+              className="w-40 sm:w-56 h-auto object-contain"
+            />
           </div>
+          
           <h2 className="text-xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-green-400 animate-slide-in-top" style={{animationDelay: '0.1s', animationFillMode: 'both'}}>
             ROPDY Circle
           </h2>
@@ -948,7 +955,11 @@ function RopdyPresentation() {
       <div className="h-16 cyber-glass border-b border-cyan-500/30 z-50 shadow-neon-blue flex-shrink-0">
         <div className="h-full px-4 flex items-center justify-between relative w-full mx-auto" style={{maxWidth: '1600px'}}>
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Waves className="text-cyan-400" size={28} />
+            <img 
+              src="/ropdy circle.png" 
+              alt="ROPDY Logo" 
+              className="w-8 h-8 object-contain"
+            />
             <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-green-400">
               ROPDY
             </span>
@@ -1007,7 +1018,12 @@ function RopdyPresentation() {
               onTouchEnd={handleTouchEnd}
               style={{touchAction: 'pan-y'}}
             >
-              <div key={currentSlide} className="cyber-glass rounded-xl md:rounded-3xl p-3 md:p-8 lg:p-12 border-2 border-cyan-500/30 flex-1 flex flex-col overflow-hidden">
+              <div key={currentSlide} className="cyber-glass rounded-xl md:rounded-3xl p-3 md:p-8 lg:p-12 border-2 border-cyan-500/30 flex-1 flex flex-col overflow-hidden relative">
+                {/* Corner Logo */}
+                <div className="absolute top-3 right-3 md:top-6 md:right-6 z-10 opacity-80 hover:opacity-100 transition-opacity">
+                  <LogoCircleImage size={40} />
+                </div>
+
                 <div className="mb-2 md:mb-6 text-center flex-shrink-0">
                   <h2 className="text-base md:text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-green-400 mb-0.5 md:mb-2 leading-tight animate-slide-in-top">
                     {slides[currentSlide].title}
