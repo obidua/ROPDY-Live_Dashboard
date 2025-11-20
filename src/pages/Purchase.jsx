@@ -14,25 +14,47 @@ import { useTransaction } from '../config/register';
 import { RefreshCw, CheckCircle, Circle } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-const PackageCard = ({ name, usdPrice, required, totalRequired, estimatedGas, index, onPurchase }) => (
+const PackageCard = ({ name, usdPrice, required, totalRequired, estimatedGas, index, onPurchase, isLoading }) => (
   <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-6 rounded-lg border border-admin-gold-600/30 hover:border-admin-gold-400 transition-all duration-300">
     <h3 className="text-xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-4">{name}</h3>
     <div className="space-y-3 mb-6">
       <p className="text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark">Price:</span> ${usdPrice}</p>
       {/* <p className="text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark">RAMA Value:</span> {ramaValue} RAMA</p> */}
       <div className="bg-cyan-500/10 rounded p-2 border border-cyan-500/30">
-        <p className="text-sm text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark font-semibold">Package:</span> {parseFloat(required).toFixed(5)} RAMA</p>
+        <p className="text-sm text-gray-900 dark:text-gray-100">
+          <span className="text-admin-cyan dark:text-admin-cyan-dark font-semibold">Package:</span>{' '}
+          {isLoading ? (
+            <span className="inline-block h-5 w-24 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></span>
+          ) : (
+            parseFloat(required).toFixed(5)
+          )}{' '}
+          RAMA
+        </p>
         <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-          <span className="font-semibold">Est. Gas:</span> {estimatedGas ? parseFloat(estimatedGas).toFixed(6) : "0"} RAMA
+          <span className="font-semibold">Est. Gas:</span>{' '}
+          {isLoading ? (
+            <span className="inline-block h-4 w-20 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></span>
+          ) : (
+            estimatedGas ? parseFloat(estimatedGas).toFixed(6) : "0"
+          )}{' '}
+          RAMA
         </p>
       </div>
       <div className="bg-green-500/20 rounded p-2 border border-green-500/30">
-        <p className="text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark font-semibold">Total Required:</span> <span className="text-green-600 dark:text-green-400 font-bold">{totalRequired} RAMA</span></p>
+        <p className="text-gray-900 dark:text-gray-100">
+          <span className="text-admin-cyan dark:text-admin-cyan-dark font-semibold">Total Required:</span>{' '}
+          {isLoading ? (
+            <span className="inline-block h-5 w-32 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></span>
+          ) : (
+            <span className="text-green-600 dark:text-green-400 font-bold">{totalRequired} RAMA</span>
+          )}
+        </p>
       </div>
       {/* <p className="text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark">Available:</span> {available} RAMA</p> */}
     </div>
-    <button onClick={() => onPurchase(index)} className="w-full bg-green-800 text-white px-6 py-2.5 rounded-lg font-semibold shadow-md hover:bg-admin-new-green/80 transition-colors border border-admin-new-green/30">
-      Purchase Now
+    <button onClick={() => onPurchase(index)} disabled={isLoading} className="w-full bg-gradient-to-r from-purple-600 via-pink-500 to-green-600 text-white px-6 py-2.5 rounded-lg font-semibold shadow-md hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 border border-purple-400/30 hover:border-pink-400/50 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed">
+      <span className="relative z-10">Purchase Now</span>
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-pink-600 to-green-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
     </button>
   </div>
 );
@@ -128,6 +150,7 @@ const Purchase = () => {
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [loadingPercentage, setLoadingPercentage] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
 
 
   // const packages = [
@@ -167,6 +190,45 @@ const Purchase = () => {
   //     available: 500
   //   }
   // ];
+
+  // Static package data - loads instantly
+  const staticPackages = [
+    {
+      packageName: "Starter Package",
+      priceInUSD: 20,
+      priceInRAMA: "200",
+      estimatedGasRAMA: 0.01,
+      totalRequired: "200.01"
+    },
+    {
+      packageName: "Silver Package",
+      priceInUSD: 40,
+      priceInRAMA: "400",
+      estimatedGasRAMA: 0.01,
+      totalRequired: "400.01"
+    },
+    {
+      packageName: "Gold Package",
+      priceInUSD: 80,
+      priceInRAMA: "800",
+      estimatedGasRAMA: 0.01,
+      totalRequired: "800.01"
+    },
+    {
+      packageName: "Platinum Package",
+      priceInUSD: 160,
+      priceInRAMA: "1600",
+      estimatedGasRAMA: 0.01,
+      totalRequired: "1600.01"
+    },
+    {
+      packageName: "Diamond Package",
+      priceInUSD: 320,
+      priceInRAMA: "3200",
+      estimatedGasRAMA: 0.01,
+      totalRequired: "3200.01"
+    }
+  ];
 
 
 
@@ -377,8 +439,8 @@ const Purchase = () => {
       }
     };
 
-    if (userAddress) fetchData();
-  }, [userAddress, refreshTrigger]);
+    if (userAddress && showHistory) fetchData();
+  }, [userAddress, refreshTrigger, showHistory]);
 
 
   // Filtered version based on selected package
@@ -404,10 +466,6 @@ const Purchase = () => {
     if (userAddress) fetchRamaprice();
   }, [])
 
-  if (loading) {
-    return <RamaLoader message="Loading purchase data..." />;
-  }
-
   return (
     <div className="relative min-h-screen">
       <BlockchainAnimation />
@@ -425,42 +483,76 @@ const Purchase = () => {
         <h1 className="text-2xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-6">🛒 Purchase Circle</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <StatCard label="Wallet Balance" value={isConnected ? `${walletBalance} RAMA` : "Not Connected"} />
+          {/* Wallet Balance Card */}
+          <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-5 rounded-lg shadow-lg border border-admin-new-green/30 hover:border-admin-new-green hover:shadow-xl hover:shadow-admin-new-green/20 transition-all duration-300">
+            <h3 className="text-sm text-admin-cyan dark:text-admin-cyan-dark font-medium">Wallet Balance</h3>
+            <div className="mt-2">
+              {isConnected && walletBalance ? (
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{walletBalance} <span className="text-sm text-gray-600">RAMA</span></p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-32"></div>
+                  <p className="text-sm text-gray-500">Loading...</p>
+                </div>
+              )}
+            </div>
+          </div>
           
           {/* Active Packages Card */}
           <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-5 rounded-lg shadow-lg border border-admin-new-green/30 hover:border-admin-new-green hover:shadow-xl hover:shadow-admin-new-green/20 transition-all duration-300">
             <h3 className="text-base text-admin-cyan dark:text-admin-cyan-dark font-semibold mb-3">📦 Active Packages</h3>
             <div className="space-y-2">
-              {['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'].map((pkg, idx) => (
-                <div key={idx} className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                  <div className="flex items-center gap-2">
-                    {activePackages[idx] ? (
-                      <>
-                        <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
-                        <span className="text-gray-900 dark:text-gray-100">{pkg}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Circle size={16} className="text-gray-400 flex-shrink-0" />
-                        <span className="text-gray-600 dark:text-gray-400">{pkg}</span>
-                      </>
+              {loading ? (
+                <div className="space-y-2">
+                  {[1,2,3,4,5].map((i) => (
+                    <div key={i} className="h-5 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                  ))}
+                </div>
+              ) : (
+                ['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'].map((pkg, idx) => (
+                  <div key={idx} className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                    <div className="flex items-center gap-2">
+                      {activePackages[idx] ? (
+                        <>
+                          <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                          <span className="text-gray-900 dark:text-gray-100">{pkg}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Circle size={16} className="text-gray-400 flex-shrink-0" />
+                          <span className="text-gray-600 dark:text-gray-400">{pkg}</span>
+                        </>
+                      )}
+                    </div>
+                    {activePackages[idx] && (
+                      <span className="text-green-500 font-semibold px-2 py-1 bg-green-500/10 rounded border border-green-500/30">
+                        {packageCounts[idx]} active
+                      </span>
                     )}
                   </div>
-                  {activePackages[idx] && (
-                    <span className="text-green-500 font-semibold px-2 py-1 bg-green-500/10 rounded border border-green-500/30">
-                      {packageCounts[idx]} active
-                    </span>
-                  )}
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
-          <StatCard label="Current Rama Price (Dollar)" value={GlobalData ? ("$" + GlobalData?.globalRama?.toString()) : "Loading"} />
+          {/* Rama Price Card */}
+          <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-5 rounded-lg shadow-lg border border-admin-new-green/30 hover:border-admin-new-green hover:shadow-xl hover:shadow-admin-new-green/20 transition-all duration-300">
+            <h3 className="text-sm text-admin-cyan dark:text-admin-cyan-dark font-medium">Current Rama Price (Dollar)</h3>
+            <div className="mt-2">
+              {GlobalData?.globalRama ? (
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${parseFloat(GlobalData.globalRama).toFixed(6)}</p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-24"></div>
+                  <p className="text-sm text-gray-500">Loading...</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {packages?.map((pkg, index) => (
+          {(packages.length > 0 ? packages : staticPackages).map((pkg, index) => (
             <PackageCard
               key={pkg.packageName}
               name={pkg.packageName}
@@ -470,6 +562,7 @@ const Purchase = () => {
               estimatedGas={pkg.estimatedGasRAMA}
               index={index}
               onPurchase={PruchaseNewPkg}
+              isLoading={loading && packages.length === 0}
             />
           ))}
         </div>
@@ -478,35 +571,47 @@ const Purchase = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 className="text-xl font-semibold text-admin-cyan dark:text-admin-cyan-dark">Purchase & Repurchase History</h2>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
-              <button
-                onClick={refetchHistory}
-                disabled={historyLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/50 rounded-lg text-cyan-400 hover:text-cyan-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RefreshCw size={16} className={historyLoading ? 'animate-spin' : ''} />
-                <span className="text-sm font-medium">Refresh</span>
-              </button>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</label>
-                <select
-                  value={selectedPkg}
-                  onChange={(e) => setSelectedPkg(e.target.value)}
-                  className="px-3 py-2 bg-transparent text-gray-900 dark:text-gray-100 border border-admin-new-green rounded-md text-sm"
+              {showHistory && (
+                <button
+                  onClick={refetchHistory}
+                  disabled={historyLoading}
+                  className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/50 rounded-lg text-cyan-400 hover:text-cyan-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="all">All Packages</option>
-                  {packagesTag.map((name) => (
-                    <option className='text-black' key={name} value={name}>{name}</option>
-                  ))}
-                </select>
-              </div>
+                  <RefreshCw size={16} className={historyLoading ? 'animate-spin' : ''} />
+                  <span className="text-sm font-medium">Refresh</span>
+                </button>
+              )}
+              {showHistory && (
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</label>
+                  <select
+                    value={selectedPkg}
+                    onChange={(e) => setSelectedPkg(e.target.value)}
+                    className="px-3 py-2 bg-transparent text-gray-900 dark:text-gray-100 border border-admin-new-green rounded-md text-sm"
+                  >
+                    <option value="all">All Packages</option>
+                    {packagesTag.map((name) => (
+                      <option className='text-black' key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 via-pink-500 to-green-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 border border-purple-400/30 hover:border-pink-400/50"
+              >
+                <span className="text-sm font-medium">{showHistory ? 'Hide' : 'Show'} History</span>
+              </button>
             </div>
           </div>
 
-          {historyLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <RamaLoader message="Loading purchase history..." percentage={loadingPercentage} />
-            </div>
-          ) : (
+          {showHistory && (
+            <>
+              {historyLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <RamaLoader message="Loading purchase history..." percentage={loadingPercentage} />
+                </div>
+              ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-white/70 dark:bg-gray-800/50">
@@ -559,6 +664,8 @@ const Purchase = () => {
               </tbody>
             </table>
             </div>
+              )}
+            </>
           )}
         </div>
 
