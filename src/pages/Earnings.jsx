@@ -14,12 +14,24 @@ const packageTabs = [
 const Earnings = () => {
   const [activePkg, setActivePkg] = useState(0);
   const [data, setData] = useState(null);
+  const [ramaPrice, setRamaPrice] = useState(0);
 
   const userAddress = JSON.parse(localStorage.getItem("UserData") || '{}')?.address;
 
-
-
   const getPackageWiseData = useStore((state) => state.getPackageWiseData)
+  const globalStats = useStore((state) => state.globalStats)
+
+  // Fetch RAMA price
+  useEffect(() => {
+    if (!userAddress) return;
+    const fetchRamaPrice = async () => {
+      const globalData = await globalStats(userAddress);
+      if (globalData?.globalRama) {
+        setRamaPrice(parseFloat(globalData.globalRama));
+      }
+    };
+    fetchRamaPrice();
+  }, [userAddress, globalStats]);
 
   useEffect(() => {
     if (!userAddress) return;
@@ -28,7 +40,15 @@ const Earnings = () => {
       setData(result);
     };
     fetchData();
-  }, [userAddress, activePkg]);
+  }, [userAddress, activePkg, getPackageWiseData]);
+
+  // Calculate USD Equivalent
+  const calculateUsdEquivalent = () => {
+    if (!data || !ramaPrice) return '$0.00';
+    const totalRama = parseFloat(data.totalRamaEarned) || 0;
+    const usdValue = totalRama * ramaPrice;
+    return `$${usdValue.toFixed(2)}`;
+  };
 
   return (
     <div className="relative min-h-screen text-white">
@@ -58,7 +78,16 @@ const Earnings = () => {
             {/* Section: Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
               <StatCard label="Total RAMA Earned" value={`${parseFloat(data.totalRamaEarned).toFixed(5)} RAMA`} />
-              <StatCard label="USD Equivalent" value={`$${data.totalUsdEquivalent}`} />
+              
+              {/* USD Equivalent Card with Live Price */}
+              <div className="bg-black/40 border border-admin-new-green/30 rounded-lg p-4 sm:p-6">
+                <p className="text-xs sm:text-sm text-gray-400 uppercase tracking-wider mb-2">USD Equivalent (from Live Price)</p>
+                <p className="text-2xl sm:text-3xl font-bold text-white mb-2">{calculateUsdEquivalent()}</p>
+                <p className="text-xs text-admin-new-green">
+                  @ ${ramaPrice.toFixed(6)} per RAMA
+                </p>
+              </div>
+
               <StatCard label="Direct Referrals" value={data.directReferrals} />
             </div>
 
