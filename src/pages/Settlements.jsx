@@ -10,14 +10,14 @@ const PaymentDetails = ({ title, details = {} }) => (
     <h3 className="text-lg font-semibold text-admin-cyan dark:text-admin-cyan-dark mb-4">{title}</h3>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <div className="space-y-3">
-        <p className="text-sm">
+        <div className="text-sm">
           <span className="text-gray-600 dark:text-gray-400">From: </span>
           <AddressDisplay value={details.from} type="address" />
-        </p>
-        <p className="text-sm">
+        </div>
+        <div className="text-sm">
           <span className="text-gray-600 dark:text-gray-400">To: </span>
           <AddressDisplay value={details.to} type="address" />
-        </p>
+        </div>
         <p className="text-sm">
           <span className="text-gray-600 dark:text-gray-400">RAMA Amount: </span>
           <span className="text-gray-900 dark:text-gray-100">{details.ramaAmount} RAMA</span>
