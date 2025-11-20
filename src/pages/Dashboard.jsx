@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [globalData, setGlobalData] = useState(null);
   const [sponserId, setSponserId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingPercentage, setLoadingPercentage] = useState(0);
 
   const { address, isConnected } = useAppKitAccount();
   const userAddress = JSON.parse(localStorage.getItem("UserData") || '{}')?.address;
@@ -28,13 +29,26 @@ const Dashboard = () => {
         return;
       }
 
+      setLoading(true);
+      setLoadingPercentage(0);
       const startTime = Date.now();
       try {
+        // Simulate progressive loading
+        const percentageInterval = setInterval(() => {
+          setLoadingPercentage(prev => {
+            if (prev < 90) return prev + Math.random() * 25;
+            return prev;
+          });
+        }, 300);
+
         const [dashInfo, globalInfo, sponsorInfo] = await Promise.all([
           getDashboardInfo(userAddress).catch(() => null),
           globalStats(userAddress).catch(() => null),
           GetSponserId(userAddress).catch(() => null),
         ]);
+
+        clearInterval(percentageInterval);
+        setLoadingPercentage(100);
 
         setDashData(dashInfo);
         setGlobalData(globalInfo);
@@ -45,7 +59,10 @@ const Dashboard = () => {
         // Ensure minimum 800ms loading time
         const elapsed = Date.now() - startTime;
         const delay = Math.max(0, 800 - elapsed);
-        setTimeout(() => setLoading(false), delay);
+        setTimeout(() => {
+          setLoading(false);
+          setLoadingPercentage(0);
+        }, delay);
       }
     };
 
@@ -58,7 +75,7 @@ const Dashboard = () => {
       <BlockchainAnimation />
       <div className="relative p-4 sm:p-6 lg:p-8">
         {loading ? (
-          <RamaLoader />
+          <RamaLoader message="Loading dashboard data..." percentage={loadingPercentage} />
         ) : (
           <>
             <h1 style={{ "color": "#FFD700" }} className="text-xl font-semibold text-admin-cyan dark:text-admin-cyan-dark mb-4">Global Stats</h1>

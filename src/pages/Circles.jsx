@@ -21,6 +21,7 @@ const Circles = () => {
 
   const [circleNumbers, setCircleNumber] = useState([])
   const [loading, setLoading] = useState(false);
+  const [loadingPercentage, setLoadingPercentage] = useState(0);
   const [viewLoading, setViewLoading] = useState(false);
 
   const userAddress = JSON.parse(localStorage.getItem("UserData") || '{}')?.address;
@@ -113,9 +114,11 @@ const Circles = () => {
     setPositionDetails([]);
     setCurrentCircle(null);
     setLoading(true);
+    setLoadingPercentage(0);
 
     const getSelectedPkg = async () => {
       try {
+        setLoadingPercentage(25);
         const res = await getActiveCircles(userAddress, selectedPackage);
         console.log('Circle Data:', res[0]);
 
@@ -124,12 +127,14 @@ const Circles = () => {
 
         console.log('Circle Data:', circleData);
 
+        setLoadingPercentage(100);
         setCircleNumber(circleData || []);
       } catch (error) {
         console.error('Error fetching circles:', error);
         setCircleNumber([]);
       } finally {
         setLoading(false);
+        setLoadingPercentage(0);
       }
     }
 
@@ -143,17 +148,20 @@ const Circles = () => {
 
     const ViewDetails = async () => {
       setLoading(true);
+      setLoadingPercentage(50);
       try {
         const res = await ViewDetailedPartner(userAddress, selectedPackage, selectedCircle);
         console.log('Detailed Circle Data:', res);
         fetchPaymentDetails(userAddress, selectedPackage, selectedCircle)
 
+        setLoadingPercentage(100);
         setMockPosition(res);
       } catch (error) {
         console.error('Error fetching details:', error);
         setMockPosition([]);
       } finally {
         setLoading(false);
+        setLoadingPercentage(0);
       }
     }
 
@@ -173,16 +181,29 @@ const Circles = () => {
   useEffect(() => {
     const fetchCircleInfo = async () => {
       setLoading(true);
+      setLoadingPercentage(0);
       try {
+        // Simulate progressive percentage
+        const percentageInterval = setInterval(() => {
+          setLoadingPercentage(prev => {
+            if (prev < 90) return prev + Math.random() * 40;
+            return prev;
+          });
+        }, 200);
+
         const [res] = await Promise.all([
           CircleInfo(userAddress),
           new Promise(resolve => setTimeout(resolve, 800))
         ]);
+
+        clearInterval(percentageInterval);
+        setLoadingPercentage(100);
         setCircleData(res)
       } catch (error) {
         console.error('Error fetching circle info:', error);
       } finally {
         setLoading(false);
+        setLoadingPercentage(0);
       }
     }
     if (userAddress) fetchCircleInfo();
@@ -216,8 +237,7 @@ const Circles = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {loading && !circleData ? (
             <div className="col-span-full flex flex-col items-center justify-center py-12">
-              <RamaLoader />
-              <p className="mt-4 text-gray-600 dark:text-gray-300 text-sm">Loading circle data...</p>
+              <RamaLoader message="Loading circle data..." percentage={loadingPercentage} />
             </div>
           ) : (
             <>
@@ -275,9 +295,8 @@ const Circles = () => {
             </div>
           </div>
           {loading && (
-            <div className="flex items-center justify-center py-6">
-              <RamaLoader />
-              <p className="ml-4 text-gray-600 dark:text-gray-300 text-sm">Loading circle data...</p>
+            <div className="flex flex-col items-center justify-center py-6">
+              <RamaLoader message="Loading circle data..." percentage={loadingPercentage} />
             </div>
           )}
           <button

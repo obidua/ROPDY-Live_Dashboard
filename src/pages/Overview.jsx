@@ -9,7 +9,8 @@ const Overview = () => {
   const [overviewData, setOverviewData] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(0);
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const [loadingPercentage, setLoadingPercentage] = useState(0);
 
   const getOverview = useStore((state) => state.getOverView);
   const userAddress = JSON.parse(localStorage.getItem('UserData') || '{}')?.address;
@@ -23,13 +24,25 @@ const Overview = () => {
         return;
       }
       setLoading(true);
+      setLoadingPercentage(0);
       try {
+        // Simulate percentage increments for better UX
+        const percentageInterval = setInterval(() => {
+          setLoadingPercentage(prev => {
+            if (prev < 90) return prev + Math.random() * 30;
+            return prev;
+          });
+        }, 300);
+
         // Add a minimum delay to show loader
         const [result] = await Promise.all([
           getOverview(userAddress, selectedLevel),
           new Promise(resolve => setTimeout(resolve, 800)) // Min 800ms loading
         ]);
         
+        clearInterval(percentageInterval);
+        setLoadingPercentage(100);
+
         console.log("result", result);
 
         const downlines = result?.downlines || [];
@@ -40,6 +53,7 @@ const Overview = () => {
         setOverviewData([]);
       } finally {
         setLoading(false);
+        setLoadingPercentage(0);
       }
     };
 
@@ -114,8 +128,7 @@ const Overview = () => {
         <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm rounded-lg p-4 border border-admin-new-green/30 overflow-x-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <RamaLoader />
-              <p className="mt-4 text-gray-600 dark:text-gray-300 text-sm">Loading downline data...</p>
+              <RamaLoader message={`Loading Level ${selectedLevel + 1} data...`} percentage={loadingPercentage} />
             </div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
