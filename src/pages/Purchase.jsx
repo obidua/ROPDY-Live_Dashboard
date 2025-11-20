@@ -11,6 +11,7 @@ import { useStore } from '../Store/UserStore';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useNavigate } from 'react-router-dom';
 import { useTransaction } from '../config/register';
+import { RefreshCw } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const PackageCard = ({ name, usdPrice, required, totalRequired, estimatedGas, index, onPurchase }) => (
@@ -418,18 +419,28 @@ const Purchase = () => {
         <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-admin-new-green/30">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 className="text-xl font-semibold text-admin-cyan dark:text-admin-cyan-dark">Purchase & Repurchase History</h2>
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Package:</label>
-              <select
-                value={selectedPkg}
-                onChange={(e) => setSelectedPkg(e.target.value)}
-                className="px-3 py-2 bg-transparent text-gray-900 dark:text-gray-100 border border-admin-new-green rounded-md"
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+              <button
+                onClick={refetchHistory}
+                disabled={historyLoading}
+                className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/50 rounded-lg text-cyan-400 hover:text-cyan-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="all">All Packages</option>
-                {packagesTag.map((name) => (
-                  <option className='text-black' key={name} value={name}>{name}</option>
-                ))}
-              </select>
+                <RefreshCw size={16} className={historyLoading ? 'animate-spin' : ''} />
+                <span className="text-sm font-medium">Refresh</span>
+              </button>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</label>
+                <select
+                  value={selectedPkg}
+                  onChange={(e) => setSelectedPkg(e.target.value)}
+                  className="px-3 py-2 bg-transparent text-gray-900 dark:text-gray-100 border border-admin-new-green rounded-md text-sm"
+                >
+                  <option value="all">All Packages</option>
+                  {packagesTag.map((name) => (
+                    <option className='text-black' key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
