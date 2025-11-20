@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import StatCard from '../components/StatCard';
 import BlockchainAnimation from '../components/BlockchainAnimation';
+import RamaLoader from '../components/RamaLoader';
 import { useStore } from '../Store/UserStore';
 
 const Cp2 = () => {
@@ -16,13 +17,17 @@ const Cp2 = () => {
     useEffect(() => {
         const fetchModData = async () => {
             if (!userAddress) return;
+            const startTime = Date.now();
             try {
                 const res = await cp2Earning(userAddress);
                 setModData(res);
             } catch (err) {
                 console.error("Error fetching cp2Earning:", err);
             } finally {
-                setLoading(false);
+                // Ensure minimum 800ms loading time for better UX
+                const elapsed = Date.now() - startTime;
+                const delay = Math.max(0, 800 - elapsed);
+                setTimeout(() => setLoading(false), delay);
             }
         };
 
@@ -74,7 +79,7 @@ const Cp2 = () => {
                 </h1>
 
                 {loading ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400">Loading data...</p>
+                    <RamaLoader />
                 ) : (
                     <>
                         {renderPoolStatus()}
