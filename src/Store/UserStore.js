@@ -980,22 +980,26 @@ export const useStore = create((set, get) => ({
         try {
           let buyedPkg = [];
           
-          // Try getAllCirclePurchaseHistory first
-          try {
-            buyedPkg = await contract.methods
-              .getAllCirclePurchaseHistory(address, i)
-              .call();
-          } catch (err) {
-            console.warn(`getAllCirclePurchaseHistory failed for package ${i}, trying alternative methods...`);
-            
-            // Try getUserPurchaseHistory as alternative
+          // Try multiple method names that might exist
+          const methodNames = [
+            'getAllCirclePurchaseHistory',
+            'getUserPurchaseHistory',
+            'getCircleHistory',
+            'getPurchaseHistory',
+            'getUserCircleHistory'
+          ];
+
+          for (const methodName of methodNames) {
             try {
-              buyedPkg = await contract.methods
-                .getUserPurchaseHistory(address, i)
-                .call();
-            } catch (err2) {
-              console.warn(`getUserPurchaseHistory also failed for package ${i}`);
-              buyedPkg = [];
+              if (typeof contract.methods[methodName] === 'function') {
+                buyedPkg = await contract.methods[methodName](address, i).call();
+                if (Array.isArray(buyedPkg) && buyedPkg.length > 0) {
+                  console.log(`✅ Found history using ${methodName}`);
+                  break;
+                }
+              }
+            } catch (err) {
+              // Continue to next method
             }
           }
 
