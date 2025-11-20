@@ -220,45 +220,114 @@ const Purchase = () => {
                   paymentInCount: entry.paymentsIn?.length || 0,
                   paymentOutCount: entry.paymentsOut?.length || 0,
                   txHash: entry.paymentsOut?.[0]?.txHash || '',
+                  type: 'Purchase',
                 });
               });
             }
           });
         }
 
-        // If no contract data found, add demo data to show table structure
+        // If no contract data found, add demo data to show table structure with multiple records
         if (allData.length === 0) {
-          allData.push(
+          const demoData = [
             {
               srNo: 1,
-              package: 'Platinum',
+              package: 'Starter',
               index: '0',
               paymentCount: '1',
-              isCompleted: 'Pending',
-              createdAt: new Date().toLocaleString(),
-              completedAt: '-',
-              paymentInCount: 0,
+              isCompleted: 'Completed',
+              createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleString(),
+              completedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toLocaleString(),
+              paymentInCount: 1,
               paymentOutCount: 0,
               txHash: '',
-            }
-          );
+              type: 'Purchase',
+            },
+            {
+              srNo: 2,
+              package: 'Starter',
+              index: '1',
+              paymentCount: '1',
+              isCompleted: 'Completed',
+              createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toLocaleString(),
+              completedAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toLocaleString(),
+              paymentInCount: 1,
+              paymentOutCount: 0,
+              txHash: '',
+              type: 'Repurchase',
+            },
+            {
+              srNo: 3,
+              package: 'Silver',
+              index: '0',
+              paymentCount: '2',
+              isCompleted: 'Completed',
+              createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toLocaleString(),
+              completedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toLocaleString(),
+              paymentInCount: 2,
+              paymentOutCount: 0,
+              txHash: '',
+              type: 'Purchase',
+            },
+            {
+              srNo: 4,
+              package: 'Silver',
+              index: '1',
+              paymentCount: '2',
+              isCompleted: 'Completed',
+              createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toLocaleString(),
+              completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toLocaleString(),
+              paymentInCount: 2,
+              paymentOutCount: 0,
+              txHash: '',
+              type: 'Repurchase',
+            },
+            {
+              srNo: 5,
+              package: 'Platinum',
+              index: '0',
+              paymentCount: '3',
+              isCompleted: 'Pending',
+              createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleString(),
+              completedAt: '-',
+              paymentInCount: 1,
+              paymentOutCount: 0,
+              txHash: '',
+              type: 'Purchase',
+            },
+          ];
+          setHistoryData(demoData);
+        } else {
+          setHistoryData(allData);
         }
-
-        setHistoryData(allData);
       } catch (error) {
         console.error("Error fetching history:", error);
         setHistoryData([
           {
             srNo: 1,
-            package: 'Platinum',
+            package: 'Starter',
             index: '0',
             paymentCount: '1',
-            isCompleted: 'Pending',
-            createdAt: new Date().toLocaleString(),
-            completedAt: '-',
-            paymentInCount: 0,
+            isCompleted: 'Completed',
+            createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleString(),
+            completedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toLocaleString(),
+            paymentInCount: 1,
             paymentOutCount: 0,
             txHash: '',
+            type: 'Purchase',
+          },
+          {
+            srNo: 2,
+            package: 'Platinum',
+            index: '0',
+            paymentCount: '3',
+            isCompleted: 'Pending',
+            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleString(),
+            completedAt: '-',
+            paymentInCount: 1,
+            paymentOutCount: 0,
+            txHash: '',
+            type: 'Purchase',
           }
         ]);
       } finally {
@@ -326,7 +395,7 @@ const Purchase = () => {
 
         <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-admin-new-green/30">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 className="text-xl font-semibold text-admin-cyan dark:text-admin-cyan-dark">Circle Purchase History</h2>
+            <h2 className="text-xl font-semibold text-admin-cyan dark:text-admin-cyan-dark">Purchase & Repurchase History</h2>
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Package:</label>
               <select
@@ -351,7 +420,7 @@ const Purchase = () => {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-white/70 dark:bg-gray-800/50">
                   <tr>
-                    {['Sr. No', 'Package', 'Index', 'Status', 'Created', 'Completed', 'IN', 'OUT'].map((heading, idx) => (
+                    {['Sr. No', 'Package', 'Index', 'Type', 'Status', 'Created', 'Completed', 'IN', 'OUT'].map((heading, idx) => (
                       <th key={idx} className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">{heading}</th>
                     ))}
                 </tr>
@@ -363,18 +432,23 @@ const Purchase = () => {
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{item.srNo}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{item.package}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{item.index}</td>
-                      {/* <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${item.isCompleted === 'Completed'
-                          ? 'bg-admin-new-green/20 text-admin-new-green'
-                          : 'bg-yellow-400/20 text-yellow-700'
-                          }`}>
-                          {item.isCompleted}
+                      <td className="px-4 py-3 text-sm">
+                        <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${
+                          item.type === 'Purchase'
+                            ? 'bg-blue-400/20 text-blue-600 dark:text-blue-400'
+                            : 'bg-purple-400/20 text-purple-600 dark:text-purple-400'
+                        }`}>
+                          {item.type}
                         </span>
-                      </td> */}
+                      </td>
 
                       <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full  bg-admin-new-green/20 text-admin-new-green`}>
-                          success
+                        <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${
+                          item.isCompleted === 'Completed'
+                            ? 'bg-admin-new-green/20 text-admin-new-green'
+                            : 'bg-yellow-400/20 text-yellow-700'
+                        }`}>
+                          {item.isCompleted}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{item.createdAt}</td>
@@ -388,7 +462,7 @@ const Purchase = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="9" className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">No history found.</td>
+                    <td colSpan="10" className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">No history found.</td>
                   </tr>
                 )}
               </tbody>
