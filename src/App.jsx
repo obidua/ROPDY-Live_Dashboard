@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import AppRoutes from './routes/AppRoutes';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -45,6 +46,7 @@ const App = () => {
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
+          <PWAInstallPrompt />
           {isHome || isRegister || ClaimOwnerNewUser || isreferral ? (
             // Home page: no sidebar layout
             <div className="min-h-screen bg-white dark:bg-black transition-colors duration-200">

@@ -1,6 +1,7 @@
 {
   "short_name": "ROPDY",
   "name": "ROPDY - Decentralized Earning Platform",
+  "description": "Build your future with 100% decentralized earning platform on blockchain",
   "icons": [
     {
       "src": "/ropdy circle.png",
@@ -20,5 +21,21 @@
   "scope": "/",
   "theme_color": "#0a0e27",
   "background_color": "#000000",
-  "orientation": "portrait-primary"
+  "orientation": "portrait-primary",
+  "categories": ["finance", "productivity"],
+  "screenshots": [
+    {
+      "src": "/ropdy circle.png",
+      "type": "image/png",
+      "sizes": "540x720",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/ropdy circle.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    }
+  ],
+  "prefer_related_applications": false
 }
