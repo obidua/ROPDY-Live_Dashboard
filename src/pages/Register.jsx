@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import BlockchainAnimation from "../components/BlockchainAnimation";
 import StatCard from "../components/StatCard";
 import NotificationModal from "../components/NotificationModal";
+import SignupModal from "../components/SignupModal";
 import { useNotification } from "../hooks/useNotification";
 import { useStore } from "../Store/UserStore";
 import { useAppKitAccount, useDisconnect } from "@reown/appkit/react";
@@ -21,6 +22,10 @@ const Register = () => {
   const [loading, setLoading] = useState();
 
   const [trxData, setTrxData] = useState();
+  
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTxLoading, setIsTxLoading] = useState(false);
 
   const referralId = searchParams.get("ref") || "Direct";
 
@@ -39,12 +44,16 @@ const Register = () => {
         handleSendTx(trxData);
       } catch (error) {
         showError('Error', 'Something went wrong during registration. Please try again.');
+        setIsTxLoading(false);
+        setIsModalOpen(false);
       }
     }
   }, [trxData]);
 
   useEffect(() => {
     if (hash) {
+      setIsTxLoading(false);
+      setIsModalOpen(false);
       const userData = {
         address: address,
         data: {},
@@ -82,11 +91,9 @@ const Register = () => {
       setLoading(true);
 
       if (address && isConnected) {
-        const res = await RegisterUser(address, sponserAdd);
-
-        console.log(res);
-
-        setTrxData(res);
+        // Open modal instead of direct registration
+        setIsModalOpen(true);
+        setLoading(false);
       } else {
         setLoading(false);
         showWarning('Wallet Not Connected', 'Please connect your wallet first to proceed with registration.');
@@ -95,6 +102,24 @@ const Register = () => {
       setLoading(false);
     }
   };
+
+  const handleModalConfirm = async () => {
+    try {
+      setIsTxLoading(true);
+      const res = await RegisterUser(address, sponserAdd);
+      setTrxData(res);
+      console.log("registration", res);
+    } catch (error) {
+      console.log(error)
+      setIsTxLoading(false);
+      Swal.fire({
+        title: 'Registration Failed',
+        text: 'Something went wrong while processing your registration.',
+        icon: 'error',
+        confirmButtonColor: '#ef4444',
+      });
+    }
+  }
 
   const CondUserIdAddres = useStore((state) => state.CondUserIdAddres);
 
@@ -321,6 +346,19 @@ const Register = () => {
             </div>
           )}
         </div>
+
+        {/* Signup Modal */}
+        <SignupModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+          }}
+          sponsorAddress={sponserAdd}
+          sponsorId={showAddId?.data}
+          referralId={referralId}
+          onConfirm={handleModalConfirm}
+          isLoading={isTxLoading}
+        />
       </div>
     </div>
   );
