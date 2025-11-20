@@ -4,6 +4,7 @@ import BlockchainAnimation from '../components/BlockchainAnimation';
 import AddressDisplay from '../components/AddressDisplay';
 import RamaLoader from '../components/RamaLoader';
 import NotificationModal from '../components/NotificationModal';
+import PurchaseModal from '../components/PurchaseModal';
 import { useNotification } from '../hooks/useNotification';
 import { useStore } from '../Store/UserStore';
 import { useAppKitAccount } from '@reown/appkit/react';
@@ -46,6 +47,11 @@ const Purchase = () => {
   const [trxData, setTrxData] = useState();
   const navigate = useNavigate();
 
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPackageForModal, setSelectedPackageForModal] = useState(null);
+  const [isTxLoading, setIsTxLoading] = useState(false);
+
   const { handleSendTx, hash } = useTransaction(trxData !== null && trxData);
 
   useEffect(() => {
@@ -54,6 +60,8 @@ const Purchase = () => {
         handleSendTx(trxData);
       } catch (error) {
         showError('Error', 'Something went wrong during transaction. Please try again.');
+        setIsTxLoading(false);
+        setIsModalOpen(false);
       }
     }
   }, [trxData]);
@@ -61,6 +69,8 @@ const Purchase = () => {
 
   useEffect(() => {
     if (hash) {
+      setIsTxLoading(false);
+      setIsModalOpen(false);
       Swal.fire({
         title: '✅ Purchase Successful',
         html: `
@@ -165,13 +175,14 @@ const Purchase = () => {
 
   const PruchaseNewPkg = async (selectedPackageIndex) => {
     try {
-
       if (isConnected && address && (address == userAddress)) {
-        const res = await PurchasePackage(address, selectedPackageIndex);
-        setTrxData(res)
-        console.log("payment", res);
-      }
-      else {
+        // Open modal with selected package
+        setSelectedPackageForModal({
+          ...packages[selectedPackageIndex],
+          walletBalance: walletBalance,
+        });
+        setIsModalOpen(true);
+      } else {
         Swal.fire({
           title: 'Wallet not connected',
           text: 'Please connect your wallet before purchasing.',
@@ -181,6 +192,25 @@ const Purchase = () => {
       }
     } catch (error) {
       console.log(error)
+      Swal.fire({
+        title: 'Purchase Failed',
+        text: 'Something went wrong while processing your transaction.',
+        icon: 'error',
+        confirmButtonColor: '#ef4444',
+      });
+    }
+  }
+
+  const handleModalConfirm = async (selectedPackageIndex) => {
+    try {
+      setIsTxLoading(true);
+      const selectedIndex = packages.indexOf(selectedPackageForModal);
+      const res = await PurchasePackage(address, selectedIndex);
+      setTrxData(res)
+      console.log("payment", res);
+    } catch (error) {
+      console.log(error)
+      setIsTxLoading(false);
       Swal.fire({
         title: 'Purchase Failed',
         text: 'Something went wrong while processing your transaction.',
@@ -492,7 +522,17 @@ const Purchase = () => {
           )}
         </div>
 
-
+        {/* Purchase Modal */}
+        <PurchaseModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedPackageForModal(null);
+          }}
+          selectedPackage={selectedPackageForModal}
+          onConfirm={handleModalConfirm}
+          isLoading={isTxLoading}
+        />
       </div>
     </div>
   );
