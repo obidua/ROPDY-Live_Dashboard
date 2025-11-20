@@ -259,6 +259,7 @@ const Purchase = () => {
   const [selectedPkg, setSelectedPkg] = useState('all');
   const [historyData, setHistoryData] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [loadingPercentage, setLoadingPercentage] = useState(0);
 
   const getPurchaseHistory = useStore((state) => state.getPurchaseHistory);
   const packagesTag = ['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'];
@@ -271,6 +272,7 @@ const Purchase = () => {
   useEffect(() => {
     const fetchData = async () => {
       setHistoryLoading(true);
+      setLoadingPercentage(0);
       const startTime = Date.now();
       try {
         // Get circle counts and settlement data like Settlements page does
@@ -320,8 +322,13 @@ const Purchase = () => {
                 console.log(`No settlement data for ${packagesTag[pkgIndex]} circle ${circleIdx}`);
               }
             }
+            // Update percentage: (pkgIndex + 1) / 5 * 100
+            const percentage = Math.round(((pkgIndex + 1) / 5) * 100);
+            setLoadingPercentage(percentage);
           } catch (pkgErr) {
             console.log(`No circles found for package ${pkgIndex}`);
+            const percentage = Math.round(((pkgIndex + 1) / 5) * 100);
+            setLoadingPercentage(percentage);
           }
         }
 
@@ -333,7 +340,10 @@ const Purchase = () => {
       } finally {
         const elapsedTime = Date.now() - startTime;
         const remainingTime = Math.max(800 - elapsedTime, 0);
-        setTimeout(() => setHistoryLoading(false), remainingTime);
+        setTimeout(() => {
+          setHistoryLoading(false);
+          setLoadingPercentage(0);
+        }, remainingTime);
       }
     };
 
@@ -425,7 +435,7 @@ const Purchase = () => {
 
           {historyLoading ? (
             <div className="flex justify-center items-center py-12">
-              <RamaLoader message="Loading purchase history..." />
+              <RamaLoader message="Loading purchase history..." percentage={loadingPercentage} />
             </div>
           ) : (
             <div className="overflow-x-auto">
