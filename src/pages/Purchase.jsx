@@ -11,13 +11,21 @@ import { useNavigate } from 'react-router-dom';
 import { useTransaction } from '../config/register';
 import Swal from 'sweetalert2';
 
-const PackageCard = ({ name, usdPrice, required, index, onPurchase }) => (
+const PackageCard = ({ name, usdPrice, required, totalRequired, estimatedGas, index, onPurchase }) => (
   <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-6 rounded-lg border border-admin-gold-600/30 hover:border-admin-gold-400 transition-all duration-300">
     <h3 className="text-xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-4">{name}</h3>
     <div className="space-y-3 mb-6">
       <p className="text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark">Price:</span> ${usdPrice}</p>
       {/* <p className="text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark">RAMA Value:</span> {ramaValue} RAMA</p> */}
-      <p className="text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark">Required:</span> {required} RAMA</p>
+      <div className="bg-cyan-500/10 rounded p-2 border border-cyan-500/30">
+        <p className="text-sm text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark font-semibold">Package:</span> {parseFloat(required).toFixed(5)} RAMA</p>
+        <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+          <span className="font-semibold">Est. Gas:</span> {estimatedGas ? parseFloat(estimatedGas).toFixed(6) : "0"} RAMA
+        </p>
+      </div>
+      <div className="bg-green-500/20 rounded p-2 border border-green-500/30">
+        <p className="text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark font-semibold">Total Required:</span> <span className="text-green-600 dark:text-green-400 font-bold">{totalRequired} RAMA</span></p>
+      </div>
       {/* <p className="text-gray-900 dark:text-gray-100"><span className="text-admin-cyan dark:text-admin-cyan-dark">Available:</span> {available} RAMA</p> */}
     </div>
     <button onClick={() => onPurchase(index)} className="w-full bg-green-800 text-white px-6 py-2.5 rounded-lg font-semibold shadow-md hover:bg-admin-new-green/80 transition-colors border border-admin-new-green/30">
@@ -397,7 +405,9 @@ const Purchase = () => {
               key={pkg.packageName}
               name={pkg.packageName}
               usdPrice={pkg.priceInUSD}
-              required={parseFloat(pkg.priceInRAMA).toFixed(5)}
+              required={pkg.priceInRAMA}
+              totalRequired={pkg.totalRequired}
+              estimatedGas={pkg.estimatedGasRAMA}
               index={index}
               onPurchase={PruchaseNewPkg}
             />

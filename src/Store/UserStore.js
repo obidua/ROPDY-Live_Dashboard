@@ -413,12 +413,51 @@ export const useStore = create((set, get) => ({
         Promise.all(usdCalls),
       ]);
 
-      // 6. Format all package data
-      const packages = Package.map((name, i) => ({
-        packageName: name,
-        priceInRAMA: web3.utils.fromWei(ramaResults[i], "ether"),
-        priceInUSD: (Number(usdResults[i]) / 1e6).toFixed(2),
-      }));
+      // 6. Get gas price for estimation
+      const gasPrice = await web3.eth.getGasPrice();
+      const trxData = contract.methods.buyPackage(0).encodeABI(); // sample call for gas estimation
+
+      // 7. Estimate gas for each package and calculate total required
+      const packages = await Promise.all(
+        Package.map(async (name, i) => {
+          const priceInRama = ramaResults[i];
+          const priceInRamaEth = web3.utils.fromWei(priceInRama, "ether");
+          
+          try {
+            // Estimate gas cost
+            const estimatedGas = await web3.eth.estimateGas({
+              from: userAddress,
+              to: ROPDY_ROOT.contractAddress,
+              value: priceInRama,
+              data: contract.methods.buyPackage(i).encodeABI(),
+            });
+            
+            const gasCostWei = BigInt(estimatedGas) * BigInt(gasPrice);
+            const gasCostEth = web3.utils.fromWei(gasCostWei.toString(), "ether");
+            const totalRequired = parseFloat(priceInRamaEth) + parseFloat(gasCostEth);
+            
+            return {
+              packageName: name,
+              priceInRAMA: priceInRamaEth,
+              priceInUSD: (Number(usdResults[i]) / 1e6).toFixed(2),
+              estimatedGasRAMA: gasCostEth,
+              totalRequired: totalRequired.toFixed(6), // total with gas
+            };
+          } catch (error) {
+            // If gas estimation fails, add 1 RAMA as fallback buffer
+            const gasCostEth = 1; // 1 RAMA buffer
+            const totalRequired = parseFloat(priceInRamaEth) + gasCostEth;
+            
+            return {
+              packageName: name,
+              priceInRAMA: priceInRamaEth,
+              priceInUSD: (Number(usdResults[i]) / 1e6).toFixed(2),
+              estimatedGasRAMA: gasCostEth.toFixed(6),
+              totalRequired: totalRequired.toFixed(6), // total with gas
+            };
+          }
+        })
+      );
 
       const packageDetails = await contract1.methods
         ._getActivePackages(userAddress)
@@ -593,11 +632,6 @@ export const useStore = create((set, get) => ({
         .call();
       const packagePriceEth = web3.utils.fromWei(packagePrice, "ether");
 
-      if (parseFloat(packagePriceEth) > parseFloat(balanceEth)) {
-        alert("Insufficient fund in your account");
-        return;
-      }
-
       const trxData = contract.methods
         .buyPackage(selectedPackageIndex)
         .encodeABI();
@@ -605,14 +639,11 @@ export const useStore = create((set, get) => ({
 
       let gasLimit;
       try {
-        // Apply 1% buffer using integer math
-        const valueWithBuffer =
-          BigInt(packagePrice) + BigInt(packagePrice) / BigInt(100);
-
+        // Estimate gas with the exact package price
         gasLimit = await web3.eth.estimateGas({
           from: userAddress,
           to: contractAddress,
-          value: valueWithBuffer,
+          value: packagePrice,
           data: trxData,
         });
       } catch (error) {
@@ -622,19 +653,31 @@ export const useStore = create((set, get) => ({
       }
 
       console.log("Estimated Gas:", gasLimit);
-      const gasCost = web3.utils.fromWei(
-        (BigInt(gasLimit) * BigInt(gasPrice)).toString(),
-        "ether"
-      );
-      console.log("Estimated Gas Cost in ETH:", gasCost);
+      
+      // Calculate total cost: package price + gas fees (for balance check only)
+      const gasCost = BigInt(gasLimit) * BigInt(gasPrice);
+      const totalCost = BigInt(packagePrice) + gasCost;
+      const totalCostEth = web3.utils.fromWei(totalCost.toString(), "ether");
+      const gasCostEth = web3.utils.fromWei(gasCost.toString(), "ether");
+      
+      console.log("Package Price ETH:", packagePriceEth);
+      console.log("Gas Cost ETH:", gasCostEth);
+      console.log("Total Cost (Package + Gas) ETH:", totalCostEth);
 
+      // Check if user has sufficient balance for both package + gas
+      if (parseFloat(totalCostEth) > parseFloat(balanceEth)) {
+        alert(`Insufficient fund in your account.\n\nRequired: ${parseFloat(totalCostEth).toFixed(6)} RAMA\n(Package: ${parseFloat(packagePriceEth).toFixed(6)} RAMA + Gas: ${parseFloat(gasCostEth).toFixed(6)} RAMA)\n\nAvailable: ${parseFloat(balanceEth).toFixed(6)} RAMA`);
+        return;
+      }
+
+      // Send ONLY the package price - gas will be deducted separately by the blockchain
       const tx = {
         from: userAddress,
         to: contractAddress,
         data: trxData,
         gas: gasLimit,
         gasPrice: gasPrice,
-        value: packagePrice, // original value, not the buffered one
+        value: packagePrice, // Send only package price, gas is separate
       };
 
       return tx;
