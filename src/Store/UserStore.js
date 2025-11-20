@@ -977,13 +977,21 @@ export const useStore = create((set, get) => ({
       const pkgData = [];
 
       for (let i = 0; i < 5; i++) {
-        const buyedPkg = await contract.methods
-          .getAllCirclePurchaseHistory(address, i)
-          .call();
-        pkgData.push({
-          pkgName: packagesTag[i].name,
-          recievedPkg: buyedPkg,
-        });
+        try {
+          const buyedPkg = await contract.methods
+            .getAllCirclePurchaseHistory(address, i)
+            .call();
+          pkgData.push({
+            pkgName: packagesTag[i].name,
+            recievedPkg: buyedPkg,
+          });
+        } catch (pkgError) {
+          console.warn(`Failed to fetch history for package ${i}:`, pkgError.message);
+          pkgData.push({
+            pkgName: packagesTag[i].name,
+            recievedPkg: [],
+          });
+        }
       }
 
       console.log(pkgData);
@@ -991,7 +999,14 @@ export const useStore = create((set, get) => ({
       return pkgData;
     } catch (error) {
       console.error("Error fetching getPackageWiseData:", error);
-      alert(`Error fetching getPackageWiseData: ${error.message}`);
+      // Return empty array for each package instead of throwing
+      return [
+        { pkgName: packagesTag[0].name, recievedPkg: [] },
+        { pkgName: packagesTag[1].name, recievedPkg: [] },
+        { pkgName: packagesTag[2].name, recievedPkg: [] },
+        { pkgName: packagesTag[3].name, recievedPkg: [] },
+        { pkgName: packagesTag[4].name, recievedPkg: [] },
+      ];
     }
   },
 
