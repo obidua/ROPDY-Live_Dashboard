@@ -7,7 +7,9 @@ const PWAInstallPrompt = () => {
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
-    setIsVisible(showInstallPrompt || isIOSInstallable);
+    // Only show if either condition is true
+    const shouldShow = showInstallPrompt || isIOSInstallable;
+    setIsVisible(shouldShow);
   }, [showInstallPrompt, isIOSInstallable]);
 
   // Detect dark/light mode
@@ -21,18 +23,21 @@ const PWAInstallPrompt = () => {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  const handleClose = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleClose = React.useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setIsVisible(false);
     dismissPrompt();
-  };
+  }, [dismissPrompt]);
 
   if (!isVisible) return null;
 
   return (
     <>
       {/* Mobile View */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden animate-slide-up">
+      <div className="fixed bottom-0 left-0 right-0 z-[60] md:hidden animate-slide-up">
         <div
           className={`${
             isDark
@@ -84,59 +89,57 @@ const PWAInstallPrompt = () => {
         </div>
       </div>
 
-      {/* Webview/Desktop View - Fixed positioning accounting for sidebar */}
-      <div className="hidden md:block">
-        <div className="fixed bottom-0 left-0 right-0 z-40 animate-slide-up">
-          <div
-            className={`${
-              isDark
-                ? 'bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 border-t border-purple-400/30'
-                : 'bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 border-t border-purple-300/50'
-            } px-6 py-5 shadow-2xl backdrop-blur-sm transition-all duration-300`}
-          >
-            <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-6">
-              {/* Content */}
-              <div className="flex-1">
-                <h3 className="text-lg lg:text-xl font-bold text-white mb-1">
-                  Install ROPDY App
-                </h3>
-                <p className="text-white/90 text-sm lg:text-base">
-                  {isIOSInstallable
-                    ? 'Tap the share button and select "Add to Home Screen" to install ROPDY'
-                    : 'Get instant access to ROPDY - Install our app for the best experience! Works offline, faster loading, and home screen access.'}
-                </p>
-              </div>
+      {/* Webview/Desktop View - Fixed positioning with higher z-index */}
+      <div className="hidden md:block fixed bottom-0 left-0 right-0 z-[60] animate-slide-up">
+        <div
+          className={`${
+            isDark
+              ? 'bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 border-t border-purple-400/30'
+              : 'bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 border-t border-purple-300/50'
+          } px-6 py-5 shadow-2xl backdrop-blur-sm transition-all duration-300`}
+        >
+          <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-6">
+            {/* Content */}
+            <div className="flex-1">
+              <h3 className="text-lg lg:text-xl font-bold text-white mb-1">
+                Install ROPDY App
+              </h3>
+              <p className="text-white/90 text-sm lg:text-base">
+                {isIOSInstallable
+                  ? 'Tap the share button and select "Add to Home Screen" to install ROPDY'
+                  : 'Get instant access to ROPDY - Install our app for the best experience! Works offline, faster loading, and home screen access.'}
+              </p>
+            </div>
 
-              {/* Buttons */}
-              <div className="flex gap-3 flex-shrink-0">
-                <button
-                  onClick={handleClose}
-                  className="px-6 py-2.5 rounded-lg bg-white/20 hover:bg-white/30 text-white font-semibold transition-colors duration-200 border border-white/30 whitespace-nowrap text-sm lg:text-base"
-                  type="button"
-                >
-                  Not Now
-                </button>
-                {!isIOSInstallable && (
-                  <button
-                    onClick={handleInstall}
-                    className="px-8 py-2.5 rounded-lg bg-white text-purple-600 font-bold hover:bg-white/90 transition-colors duration-200 shadow-lg whitespace-nowrap text-sm lg:text-base"
-                    type="button"
-                  >
-                    Install Now
-                  </button>
-                )}
-              </div>
-
-              {/* Close button */}
+            {/* Buttons */}
+            <div className="flex gap-3 flex-shrink-0">
               <button
                 onClick={handleClose}
-                className="text-white/70 hover:text-white text-2xl transition-colors flex-shrink-0"
-                aria-label="Close install prompt"
+                className="px-6 py-2.5 rounded-lg bg-white/20 hover:bg-white/30 text-white font-semibold transition-colors duration-200 border border-white/30 whitespace-nowrap text-sm lg:text-base"
                 type="button"
               >
-                ✕
+                Not Now
               </button>
+              {!isIOSInstallable && (
+                <button
+                  onClick={handleInstall}
+                  className="px-8 py-2.5 rounded-lg bg-white text-purple-600 font-bold hover:bg-white/90 transition-colors duration-200 shadow-lg whitespace-nowrap text-sm lg:text-base"
+                  type="button"
+                >
+                  Install Now
+                </button>
+              )}
             </div>
+
+            {/* Close button */}
+            <button
+              onClick={handleClose}
+              className="text-white/70 hover:text-white text-2xl transition-colors flex-shrink-0"
+              aria-label="Close install prompt"
+              type="button"
+            >
+              ✕
+            </button>
           </div>
         </div>
       </div>

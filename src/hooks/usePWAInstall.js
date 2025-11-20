@@ -57,6 +57,7 @@ export const usePWAInstall = () => {
 
   const dismissPrompt = () => {
     setShowInstallPrompt(false);
+    setIsIOSInstallable(false);
   };
 
   return {
