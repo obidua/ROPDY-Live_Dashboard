@@ -476,11 +476,31 @@ export const useStore = create((set, get) => ({
         userPackage: Package_Name[activePackage],
         UserBalance: currentBalance,
         packages,
+        activePackages: packageDetails,
       };
     } catch (error) {
       console.error("Error fetching purchaseInfo:", error);
       alert(`Error fetching purchaseInfo: ${error.message}`);
       throw error;
+    }
+  },
+
+  getActivePackages: async (userAddress) => {
+    try {
+      const ROPDY_VIEW = await fetchContractAbi("ROPDY_VIEW");
+      const contract = new web3.eth.Contract(
+        ROPDY_VIEW.abi,
+        ROPDY_VIEW.contractAddress
+      );
+
+      const packageDetails = await contract.methods
+        ._getActivePackages(userAddress)
+        .call();
+
+      return packageDetails;
+    } catch (error) {
+      console.error("Error fetching active packages:", error);
+      return [false, false, false, false, false]; // Return all false if error
     }
   },
 

@@ -11,7 +11,7 @@ import { useStore } from '../Store/UserStore';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useNavigate } from 'react-router-dom';
 import { useTransaction } from '../config/register';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, CheckCircle, Circle } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const PackageCard = ({ name, usdPrice, required, totalRequired, estimatedGas, index, onPurchase }) => (
@@ -123,8 +123,10 @@ const Purchase = () => {
 
   const [packages, setPackages] = useState([]);
   const [activePkg, setActivePkg] = useState();
+  const [activePackages, setActivePackages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [loadingPercentage, setLoadingPercentage] = useState(0);
 
 
   // const packages = [
@@ -173,15 +175,19 @@ const Purchase = () => {
   useEffect(() => {
     const fetchPurchaseData = async () => {
       setLoading(true);
+      setLoadingPercentage(0);
       const startTime = Date.now();
       try {
         const response = await purchaseInfo(userAddress);
 
         console.log("Purchase Data:", response);
 
+        setLoadingPercentage(100);
+
         setPackages(response.packages || []);
         setWalletBalance(response.UserBalance)
         setActivePkg(response.userPackage)
+        setActivePackages(response.activePackages || []);
 
       } catch (error) {
         console.log(error)
@@ -189,12 +195,15 @@ const Purchase = () => {
       } finally {
         const elapsedTime = Date.now() - startTime;
         const remainingTime = Math.max(800 - elapsedTime, 0);
-        setTimeout(() => setLoading(false), remainingTime);
+        setTimeout(() => {
+          setLoading(false);
+          setLoadingPercentage(0);
+        }, remainingTime);
       }
     }
 
-    fetchPurchaseData();
-  }, []);
+    if (userAddress) fetchPurchaseData();
+  }, [userAddress]);
 
 
 
@@ -260,7 +269,6 @@ const Purchase = () => {
   const [selectedPkg, setSelectedPkg] = useState('all');
   const [historyData, setHistoryData] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [loadingPercentage, setLoadingPercentage] = useState(0);
 
   const getPurchaseHistory = useStore((state) => state.getPurchaseHistory);
   const packagesTag = ['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'];
@@ -397,7 +405,31 @@ const Purchase = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <StatCard label="Wallet Balance" value={isConnected ? `${walletBalance} RAMA` : "Not Connected"} />
-          <StatCard label="Current Package" value={activePkg || "N/A"} />
+          
+          {/* Active Packages Card */}
+          <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-5 rounded-lg shadow-lg border border-admin-new-green/30 hover:border-admin-new-green hover:shadow-xl hover:shadow-admin-new-green/20 transition-all duration-300">
+            <h3 className="text-base text-admin-cyan dark:text-admin-cyan-dark font-semibold mb-3">📦 Active Packages</h3>
+            <div className="space-y-2">
+              {['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'].map((pkg, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
+                  {activePackages[idx] ? (
+                    <>
+                      <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                      <span className="text-gray-900 dark:text-gray-100">{pkg}</span>
+                      <span className="text-green-500 text-xs font-semibold">Active</span>
+                    </>
+                  ) : (
+                    <>
+                      <Circle size={16} className="text-gray-400 flex-shrink-0" />
+                      <span className="text-gray-600 dark:text-gray-400">{pkg}</span>
+                      <span className="text-gray-400 text-xs">Inactive</span>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
           <StatCard label="Current Rama Price (Dollar)" value={GlobalData ? ("$" + GlobalData?.globalRama?.toString()) : "Loading"} />
         </div>
 
