@@ -5,8 +5,7 @@ import { parseGwei } from 'viem';
 
 export const useTransaction = (TEST_TX) => {
     const { address } = useAppKitAccount();
-    // console.log("--------------address", address, TEST_TX)
-    const { sendTransaction, data: hash } = useSendTransaction();
+    const { sendTransaction, data: hash, error, isPending, status } = useSendTransaction();
 
     const handleSendTx = () => {
         try {
@@ -21,5 +20,8 @@ export const useTransaction = (TEST_TX) => {
     return {
         handleSendTx,
         hash,
+        error,
+        isPending,
+        status,
     };
 };

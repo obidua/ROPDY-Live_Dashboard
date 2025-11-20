@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, ChevronRight, Wallet, Shield, Zap, ArrowRight } from 'lucide-react';
 
-const PurchaseModal = ({ isOpen, onClose, selectedPackage, onConfirm, isLoading }) => {
+const PurchaseModal = ({ isOpen, onClose, selectedPackage, onConfirm, isLoading, errorMessage }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [txInProgress, setTxInProgress] = useState(false);
 
@@ -63,8 +63,8 @@ const PurchaseModal = ({ isOpen, onClose, selectedPackage, onConfirm, isLoading 
         </div>
 
         {/* Step Indicator - Mobile Optimized */}
-        <div className="px-3 sm:px-6 pt-3 sm:pt-6 pb-3 sm:pb-0 flex-shrink-0">
-          <div className="flex items-center justify-between gap-1 sm:gap-0">
+        <div className="px-3 sm:px-6 pt-3 sm:pt-6 pb-4 sm:pb-6 flex-shrink-0">
+          <div className="flex items-center justify-between gap-1 sm:gap-0 mb-4">
             {steps.map((step, idx) => (
               <div key={step.number} className="flex items-center flex-1 min-w-0">
                 <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold transition-all flex-shrink-0 text-xs sm:text-sm ${
@@ -88,17 +88,10 @@ const PurchaseModal = ({ isOpen, onClose, selectedPackage, onConfirm, isLoading 
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-4 gap-1 mt-2">
-            {steps.map((step) => (
-              <p key={step.number} className={`text-xs text-center font-semibold truncate ${currentStep >= step.number ? 'text-cyan-300' : 'text-slate-500'}`}>
-                {step.title}
-              </p>
-            ))}
-          </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 sm:py-8 min-h-0">
           {/* Step 1: Review Package */}
           {currentStep === 1 && (
             <div className="space-y-4 animate-fade-in">
@@ -217,7 +210,13 @@ const PurchaseModal = ({ isOpen, onClose, selectedPackage, onConfirm, isLoading 
                     </div>
                     <h4 className="text-base font-bold text-cyan-300 mb-1">Processing</h4>
                     <p className="text-xs text-cyan-300/70">Confirming purchase...</p>
-                    <p className="text-xs text-cyan-300/50 mt-2">Do not close this window</p>
+                    <p className="text-xs text-cyan-300/50 mt-2">Please approve in your wallet</p>
+                    {errorMessage && (
+                      <div className="mt-4 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                        <p className="text-xs text-red-400 font-semibold mb-1">❌ Error:</p>
+                        <p className="text-xs text-red-300">{errorMessage}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -5,6 +5,7 @@ import AddressDisplay from '../components/AddressDisplay';
 import RamaLoader from '../components/RamaLoader';
 import NotificationModal from '../components/NotificationModal';
 import PurchaseModal from '../components/PurchaseModal';
+import TransactionStatusModal from '../components/TransactionStatusModal';
 import { useNotification } from '../hooks/useNotification';
 import { useStore } from '../Store/UserStore';
 import { useAppKitAccount } from '@reown/appkit/react';
@@ -50,18 +51,28 @@ const Purchase = () => {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPackageForModal, setSelectedPackageForModal] = useState(null);
+  const [selectedPackageIndex, setSelectedPackageIndex] = useState(-1);
   const [isTxLoading, setIsTxLoading] = useState(false);
+  const [txError, setTxError] = useState(null);
 
-  const { handleSendTx, hash } = useTransaction(trxData !== null && trxData);
+  // Transaction Status Modal state
+  const [txStatusModal, setTxStatusModal] = useState({
+    isOpen: false,
+    status: null, // 'success' | 'cancelled' | 'error'
+    transactionHash: null,
+  });
+
+  const { handleSendTx, hash, error: txHashError, status } = useTransaction(trxData !== null && trxData);
 
   useEffect(() => {
     if (trxData) {
       try {
         handleSendTx(trxData);
       } catch (error) {
-        showError('Error', 'Something went wrong during transaction. Please try again.');
+        const errorMessage = error?.message || 'Something went wrong during transaction';
+        setTxError(errorMessage);
         setIsTxLoading(false);
-        setIsModalOpen(false);
+        showError('Transaction Error', errorMessage);
       }
     }
   }, [trxData]);
@@ -71,23 +82,38 @@ const Purchase = () => {
     if (hash) {
       setIsTxLoading(false);
       setIsModalOpen(false);
-      Swal.fire({
-        title: '✅ Purchase Successful',
-        html: `
-          <p>Package purchase completed successfully.</p>
-          <p style="margin-top: 10px;">
-            <a href="https://ramascan.com/tx/${hash}" target="_blank" rel="noopener noreferrer" style="color:#3b82f6; font-weight:bold;">
-              🔗 View Transaction
-            </a>
-          </p>
-        `,
-        icon: 'success',
-        confirmButtonText: 'Close',
-        confirmButtonColor: '#22c55e',
+      setTxStatusModal({
+        isOpen: true,
+        status: 'success',
+        transactionHash: hash,
       });
-
+      // Refetch history after successful transaction (delay to allow blockchain to update and finalize)
+      setTimeout(() => {
+        refetchHistory();
+      }, 3000);
     }
   }, [hash]);
+
+  useEffect(() => {
+    if (txHashError) {
+      setIsTxLoading(false);
+      const errorMessage = txHashError?.message || 'Transaction was cancelled';
+      
+      if (errorMessage.includes('cancelled') || errorMessage.includes('rejected')) {
+        setTxStatusModal({
+          isOpen: true,
+          status: 'cancelled',
+          transactionHash: null,
+        });
+      } else {
+        setTxStatusModal({
+          isOpen: true,
+          status: 'error',
+          transactionHash: null,
+        });
+      }
+    }
+  }, [txHashError]);
 
 
 
@@ -173,14 +199,15 @@ const Purchase = () => {
 
   const PurchasePackage = useStore((state) => state.PurchasePackage)
 
-  const PruchaseNewPkg = async (selectedPackageIndex) => {
+  const PruchaseNewPkg = async (pkgIndex) => {
     try {
       if (isConnected && address && (address == userAddress)) {
         // Open modal with selected package
         setSelectedPackageForModal({
-          ...packages[selectedPackageIndex],
+          ...packages[pkgIndex],
           walletBalance: walletBalance,
         });
+        setSelectedPackageIndex(pkgIndex);
         setIsModalOpen(true);
       } else {
         Swal.fire({
@@ -201,19 +228,24 @@ const Purchase = () => {
     }
   }
 
-  const handleModalConfirm = async (selectedPackageIndex) => {
+  const handleModalConfirm = async () => {
     try {
       setIsTxLoading(true);
-      const selectedIndex = packages.indexOf(selectedPackageForModal);
-      const res = await PurchasePackage(address, selectedIndex);
+      setTxError(null);
+      if (selectedPackageIndex < 0) {
+        throw new Error("Invalid package selection");
+      }
+      const res = await PurchasePackage(address, selectedPackageIndex);
       setTrxData(res)
       console.log("payment", res);
     } catch (error) {
+      const errorMsg = error?.message || 'Something went wrong while processing your transaction.';
       console.log(error)
+      setTxError(errorMsg);
       setIsTxLoading(false);
       Swal.fire({
         title: 'Purchase Failed',
-        text: 'Something went wrong while processing your transaction.',
+        text: errorMsg,
         icon: 'error',
         confirmButtonColor: '#ef4444',
       });
@@ -226,149 +258,78 @@ const Purchase = () => {
 
   const [selectedPkg, setSelectedPkg] = useState('all');
   const [historyData, setHistoryData] = useState([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const getPurchaseHistory = useStore((state) => state.getPurchaseHistory);
   const packagesTag = ['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'];
 
-
-
+  // Function to refetch history
+  const refetchHistory = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       setHistoryLoading(true);
       const startTime = Date.now();
       try {
-        const res = await getPurchaseHistory(userAddress);
-
+        // Get circle counts and settlement data like Settlements page does
+        const CircleCount = useStore.getState().CircleCount;
+        const getUsrSettlement = useStore.getState().getUsrSettlement;
+        
+        const packagesTag = ['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'];
         const allData = [];
+        let srNo = 1;
 
-        if (res && Array.isArray(res)) {
-          res.forEach((pkg) => {
-            const { pkgName, recievedPkg } = pkg;
+        // For each package
+        for (let pkgIndex = 0; pkgIndex < 5; pkgIndex++) {
+          try {
+            // Get circle count for this package
+            const circles = await CircleCount(userAddress, pkgIndex);
+            
+            // For each circle, get settlement details
+            for (let circleIdx = 0; circleIdx < circles.length; circleIdx++) {
+              try {
+                const settlement = await getUsrSettlement(userAddress, pkgIndex, circleIdx);
+                
+                // Extract created date from cp1 settlement
+                const createdAt = settlement.cp1?.timestamp 
+                  ? new Date(Number(settlement.cp1.timestamp) * 1000).toLocaleString()
+                  : new Date().toLocaleString();
+                
+                // Check if completed (cp2 has a timestamp)
+                const isCompleted = settlement.cp2?.timestamp && Number(settlement.cp2.timestamp) > 0;
+                const completedAt = isCompleted
+                  ? new Date(Number(settlement.cp2.timestamp) * 1000).toLocaleString()
+                  : '-';
 
-            if (recievedPkg && Array.isArray(recievedPkg) && recievedPkg.length > 0) {
-              recievedPkg.forEach((entry, index) => {
                 allData.push({
-                  srNo: allData.length + 1,
-                  package: pkgName,
-                  index: entry.index?.toString() || index.toString(),
-                  paymentCount: entry.paymentCount?.toString() || '0',
-                  isCompleted: entry.isCompleted ? 'Completed' : 'Pending',
-                  createdAt: entry.createdAt ? new Date(Number(entry.createdAt) * 1000).toLocaleString() : new Date().toLocaleString(),
-                  completedAt: entry.isCompleted && entry.completedAt ? new Date(Number(entry.completedAt) * 1000).toLocaleString() : '-',
-                  paymentInCount: entry.paymentsIn?.length || 0,
-                  paymentOutCount: entry.paymentsOut?.length || 0,
-                  txHash: entry.paymentsOut?.[0]?.txHash || '',
+                  srNo: srNo++,
+                  package: packagesTag[pkgIndex],
+                  index: circleIdx.toString(),
+                  paymentCount: '1',
+                  isCompleted: isCompleted ? 'Completed' : 'Pending',
+                  createdAt: createdAt,
+                  completedAt: completedAt,
+                  paymentInCount: isCompleted ? 1 : 0,
+                  paymentOutCount: 0,
+                  txHash: '',
                   type: 'Purchase',
                 });
-              });
+              } catch (circleErr) {
+                console.log(`No settlement data for ${packagesTag[pkgIndex]} circle ${circleIdx}`);
+              }
             }
-          });
+          } catch (pkgErr) {
+            console.log(`No circles found for package ${pkgIndex}`);
+          }
         }
 
-        // If no contract data found, add demo data to show table structure with multiple records
-        if (allData.length === 0) {
-          const demoData = [
-            {
-              srNo: 1,
-              package: 'Starter',
-              index: '0',
-              paymentCount: '1',
-              isCompleted: 'Completed',
-              createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleString(),
-              completedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toLocaleString(),
-              paymentInCount: 1,
-              paymentOutCount: 0,
-              txHash: '',
-              type: 'Purchase',
-            },
-            {
-              srNo: 2,
-              package: 'Starter',
-              index: '1',
-              paymentCount: '1',
-              isCompleted: 'Completed',
-              createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toLocaleString(),
-              completedAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toLocaleString(),
-              paymentInCount: 1,
-              paymentOutCount: 0,
-              txHash: '',
-              type: 'Repurchase',
-            },
-            {
-              srNo: 3,
-              package: 'Silver',
-              index: '0',
-              paymentCount: '2',
-              isCompleted: 'Completed',
-              createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toLocaleString(),
-              completedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toLocaleString(),
-              paymentInCount: 2,
-              paymentOutCount: 0,
-              txHash: '',
-              type: 'Purchase',
-            },
-            {
-              srNo: 4,
-              package: 'Silver',
-              index: '1',
-              paymentCount: '2',
-              isCompleted: 'Completed',
-              createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toLocaleString(),
-              completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toLocaleString(),
-              paymentInCount: 2,
-              paymentOutCount: 0,
-              txHash: '',
-              type: 'Repurchase',
-            },
-            {
-              srNo: 5,
-              package: 'Platinum',
-              index: '0',
-              paymentCount: '3',
-              isCompleted: 'Pending',
-              createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleString(),
-              completedAt: '-',
-              paymentInCount: 1,
-              paymentOutCount: 0,
-              txHash: '',
-              type: 'Purchase',
-            },
-          ];
-          setHistoryData(demoData);
-        } else {
-          setHistoryData(allData);
-        }
+        // Set the data (show actual data if available, empty if none)
+        setHistoryData(allData);
       } catch (error) {
         console.error("Error fetching history:", error);
-        setHistoryData([
-          {
-            srNo: 1,
-            package: 'Starter',
-            index: '0',
-            paymentCount: '1',
-            isCompleted: 'Completed',
-            createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleString(),
-            completedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toLocaleString(),
-            paymentInCount: 1,
-            paymentOutCount: 0,
-            txHash: '',
-            type: 'Purchase',
-          },
-          {
-            srNo: 2,
-            package: 'Platinum',
-            index: '0',
-            paymentCount: '3',
-            isCompleted: 'Pending',
-            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleString(),
-            completedAt: '-',
-            paymentInCount: 1,
-            paymentOutCount: 0,
-            txHash: '',
-            type: 'Purchase',
-          }
-        ]);
+        setHistoryData([]);
       } finally {
         const elapsedTime = Date.now() - startTime;
         const remainingTime = Math.max(800 - elapsedTime, 0);
@@ -377,7 +338,7 @@ const Purchase = () => {
     };
 
     if (userAddress) fetchData();
-  }, [userAddress]);
+  }, [userAddress, refreshTrigger]);
 
 
   // Filtered version based on selected package
@@ -528,10 +489,39 @@ const Purchase = () => {
           onClose={() => {
             setIsModalOpen(false);
             setSelectedPackageForModal(null);
+            setTxError(null);
           }}
           selectedPackage={selectedPackageForModal}
           onConfirm={handleModalConfirm}
           isLoading={isTxLoading}
+          errorMessage={txError}
+        />
+
+        {/* Transaction Status Modal */}
+        <TransactionStatusModal
+          isOpen={txStatusModal.isOpen}
+          status={txStatusModal.status}
+          transactionHash={txStatusModal.transactionHash}
+          onClose={() => {
+            setTxStatusModal({ isOpen: false, status: null, transactionHash: null });
+            setTrxData(null);
+            setIsModalOpen(false);
+            setSelectedPackageForModal(null);
+            setTxError(null);
+            setSelectedPackageIndex(-1);
+          }}
+          onDashboard={() => {
+            setTxStatusModal({ isOpen: false, status: null, transactionHash: null });
+            setTrxData(null);
+            setIsModalOpen(false);
+            setSelectedPackageForModal(null);
+            setTxError(null);
+            setSelectedPackageIndex(-1);
+            navigate('/dashboard');
+          }}
+          onViewScan={() => {
+            window.open(`https://ramascan.com/tx/${txStatusModal.transactionHash}`, '_blank');
+          }}
         />
       </div>
     </div>
