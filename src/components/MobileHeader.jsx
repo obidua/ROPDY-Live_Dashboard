@@ -1,5 +1,5 @@
 import React from 'react';
-import RopdyLogo from './RopdyLogo';
+import LogoCircleImage from './LogoCircleImage';
 
 const MobileHeader = ({ 
   isConnected,
@@ -10,8 +10,8 @@ const MobileHeader = ({
     <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/50 dark:bg-black/50 backdrop-blur-sm border-b border-admin-gold-900/50 px-4 py-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <RopdyLogo size={40} />
-          <span className="text-lg font-bold tracking-wide text-admin-cyan dark:text-admin-cyan-dark">
+          <LogoCircleImage size={40} />
+          <span className="text-base font-bold tracking-wide text-admin-cyan dark:text-admin-cyan-dark">
             ROPDY
           </span>
         </div>

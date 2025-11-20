@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BlockchainAnimation from '../components/BlockchainAnimation';
+import LogoFull from '../components/LogoFull';
 
 import { useAppKit, useAppKitAccount, useDisconnect } from '@reown/appkit/react';
 import { useStore } from "../Store/UserStore";
@@ -161,6 +162,13 @@ const Home = () => {
             <BlockchainAnimation />
             <div className="relative p-4 sm:p-6 lg:p-8">
                 <div className="max-w-6xl mx-auto">
+                    {/* Full Width Logo */}
+                    <div className="flex justify-center mb-12">
+                        <div className="w-48 sm:w-64">
+                            <LogoFull />
+                        </div>
+                    </div>
+
                     <h1 className="text-2xl sm:text-3xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-4 text-center">
                         Welcome to ROPDY — Choose Your Access Mode
                     </h1>

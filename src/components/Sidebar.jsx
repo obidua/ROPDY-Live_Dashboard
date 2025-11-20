@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import MobileHeader from './MobileHeader';
 import AddressDisplay from './AddressDisplay';
-import RopdyLogo from './RopdyLogo';
+import LogoCircleImage from './LogoCircleImage';
 import { useAppKit, useAppKitAccount, useDisconnect } from '@reown/appkit/react';
 import { useStore } from "../Store/UserStore";
 
@@ -184,7 +184,7 @@ const Sidebar = () => {
         <div className="p-4 border-b border-admin-gold-900/50 bg-white/50 dark:bg-black/50 backdrop-blur-sm flex-shrink-0">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <RopdyLogo size={48} />
+              <LogoCircleImage size={48} />
               <span className="text-lg font-bold tracking-wide text-admin-cyan dark:text-admin-cyan-dark hidden sm:inline">
                 ROPDY
               </span>
