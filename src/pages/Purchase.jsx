@@ -124,6 +124,7 @@ const Purchase = () => {
   const [packages, setPackages] = useState([]);
   const [activePkg, setActivePkg] = useState();
   const [activePackages, setActivePackages] = useState([]);
+  const [packageCounts, setPackageCounts] = useState([0, 0, 0, 0, 0]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [loadingPercentage, setLoadingPercentage] = useState(0);
@@ -182,12 +183,32 @@ const Purchase = () => {
 
         console.log("Purchase Data:", response);
 
+        setLoadingPercentage(50);
+
+        // Get package counts for each active package
+        const CircleCount = useStore.getState().CircleCount;
+        const counts = [0, 0, 0, 0, 0];
+        
+        try {
+          for (let pkgIdx = 0; pkgIdx < 5; pkgIdx++) {
+            try {
+              const circles = await CircleCount(userAddress, pkgIdx);
+              counts[pkgIdx] = circles.length || 0;
+            } catch (err) {
+              counts[pkgIdx] = 0;
+            }
+          }
+        } catch (err) {
+          console.log("Could not fetch package counts:", err);
+        }
+
         setLoadingPercentage(100);
 
         setPackages(response.packages || []);
         setWalletBalance(response.UserBalance)
         setActivePkg(response.userPackage)
         setActivePackages(response.activePackages || []);
+        setPackageCounts(counts);
 
       } catch (error) {
         console.log(error)
@@ -411,19 +432,24 @@ const Purchase = () => {
             <h3 className="text-base text-admin-cyan dark:text-admin-cyan-dark font-semibold mb-3">📦 Active Packages</h3>
             <div className="space-y-2">
               {['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'].map((pkg, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-xs sm:text-sm">
-                  {activePackages[idx] ? (
-                    <>
-                      <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
-                      <span className="text-gray-900 dark:text-gray-100">{pkg}</span>
-                      <span className="text-green-500 text-xs font-semibold">Active</span>
-                    </>
-                  ) : (
-                    <>
-                      <Circle size={16} className="text-gray-400 flex-shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-400">{pkg}</span>
-                      <span className="text-gray-400 text-xs">Inactive</span>
-                    </>
+                <div key={idx} className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                  <div className="flex items-center gap-2">
+                    {activePackages[idx] ? (
+                      <>
+                        <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+                        <span className="text-gray-900 dark:text-gray-100">{pkg}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Circle size={16} className="text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-600 dark:text-gray-400">{pkg}</span>
+                      </>
+                    )}
+                  </div>
+                  {activePackages[idx] && (
+                    <span className="text-green-500 font-semibold px-2 py-1 bg-green-500/10 rounded border border-green-500/30">
+                      {packageCounts[idx]} active
+                    </span>
                   )}
                 </div>
               ))}
