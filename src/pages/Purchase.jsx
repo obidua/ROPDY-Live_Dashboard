@@ -11,7 +11,7 @@ import { useStore } from '../Store/UserStore';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useNavigate } from 'react-router-dom';
 import { useTransaction } from '../config/register';
-import { RefreshCw, CheckCircle, Circle } from 'lucide-react';
+import { RefreshCw, CheckCircle, Circle, Crown, Zap, Gem, Sparkles, Gift } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const PackageCard = ({ name, usdPrice, required, totalRequired, estimatedGas, index, onPurchase, isLoading }) => (
@@ -485,68 +485,103 @@ const Purchase = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {/* Wallet Balance Card */}
           <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-5 rounded-lg shadow-lg border border-admin-new-green/30 hover:border-admin-new-green hover:shadow-xl hover:shadow-admin-new-green/20 transition-all duration-300">
-            <h3 className="text-sm text-admin-cyan dark:text-admin-cyan-dark font-medium">Wallet Balance</h3>
-            <div className="mt-2">
-              {isConnected && walletBalance ? (
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{walletBalance} <span className="text-sm text-gray-600">RAMA</span></p>
-              ) : (
-                <div className="space-y-2">
-                  <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-32"></div>
-                  <p className="text-sm text-gray-500">Loading...</p>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="text-sm text-admin-cyan dark:text-admin-cyan-dark font-medium">Wallet Balance</h3>
+                <div className="mt-2">
+                  {isConnected && walletBalance ? (
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{walletBalance} <span className="text-sm text-gray-600">RAMA</span></p>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-32"></div>
+                      <p className="text-sm text-gray-500">Loading...</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+              <div className="flex-shrink-0 ml-4">
+                <svg className="w-12 h-12 animate-spin" style={{animationDuration: '20s'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280.72 280.48">
+                  <g opacity="0.8">
+                    <path fill="#00D9FF" d="M358.48,185.45A139.71,139.71,0,0,1,430.73,162v56a84,84,0,0,0-39.34,12.77Z" transform="translate(-296 -161.99)" />
+                    <path fill="#00D9FF" d="M304.69,253.53a140.71,140.71,0,0,1,44.68-61.45l32.91,45.29a84.72,84.72,0,0,0-24.34,33.46Z" transform="translate(-296 -161.99)" />
+                  </g>
+                </svg>
+              </div>
             </div>
           </div>
           
           {/* Active Packages Card */}
-          <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-5 rounded-lg shadow-lg border border-admin-new-green/30 hover:border-admin-new-green hover:shadow-xl hover:shadow-admin-new-green/20 transition-all duration-300">
-            <h3 className="text-base text-admin-cyan dark:text-admin-cyan-dark font-semibold mb-3">📦 Active Packages</h3>
-            <div className="space-y-2">
+          <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 dark:from-slate-900 dark:via-slate-950 dark:to-black backdrop-blur-sm p-5 rounded-lg shadow-xl border border-cyan-500/30 hover:border-cyan-400/50 hover:shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300">
+            <h3 className="text-base text-cyan-300 dark:text-cyan-200 font-bold mb-4 flex items-center gap-2">
+              <span className="text-lg">📦</span> Active Packages
+            </h3>
+            <div className="space-y-3">
               {loading ? (
                 <div className="space-y-2">
                   {[1,2,3,4,5].map((i) => (
-                    <div key={i} className="h-5 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                    <div key={i} className="h-6 bg-gray-700 dark:bg-gray-600 rounded animate-pulse"></div>
                   ))}
                 </div>
               ) : (
-                ['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'].map((pkg, idx) => (
-                  <div key={idx} className="flex items-center justify-between gap-2 text-xs sm:text-sm">
-                    <div className="flex items-center gap-2">
+                ['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'].map((pkg, idx) => {
+                  const iconMap = {
+                    'Starter': <Gift size={18} className="text-blue-400" />,
+                    'Silver': <Sparkles size={18} className="text-gray-300" />,
+                    'Gold': <Crown size={18} className="text-yellow-400" />,
+                    'Platinum': <Zap size={18} className="text-purple-400" />,
+                    'Diamond': <Gem size={18} className="text-pink-400" />
+                  };
+                  
+                  return (
+                    <div key={idx} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-white/5 border border-cyan-500/10 hover:bg-white/10 hover:border-cyan-500/20 transition-all">
+                      <div className="flex items-center gap-3 flex-1">
+                        {iconMap[pkg]}
+                        <div className="flex-1">
+                          <p className={`font-semibold text-sm ${activePackages[idx] ? 'text-cyan-100' : 'text-gray-400'}`}>
+                            {pkg}
+                          </p>
+                        </div>
+                      </div>
                       {activePackages[idx] ? (
-                        <>
-                          <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
-                          <span className="text-gray-900 dark:text-gray-100">{pkg}</span>
-                        </>
+                        <span className="text-green-300 font-bold px-3 py-1 bg-green-500/20 rounded-full border border-green-400/30 text-xs whitespace-nowrap">
+                          {packageCounts[idx]} active
+                        </span>
                       ) : (
-                        <>
-                          <Circle size={16} className="text-gray-400 flex-shrink-0" />
-                          <span className="text-gray-600 dark:text-gray-400">{pkg}</span>
-                        </>
+                        <span className="text-gray-500 font-semibold text-xs px-3 py-1 bg-gray-700/30 rounded-full border border-gray-600/30">
+                          Inactive
+                        </span>
                       )}
                     </div>
-                    {activePackages[idx] && (
-                      <span className="text-green-500 font-semibold px-2 py-1 bg-green-500/10 rounded border border-green-500/30">
-                        {packageCounts[idx]} active
-                      </span>
-                    )}
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
 
           {/* Rama Price Card */}
           <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-5 rounded-lg shadow-lg border border-admin-new-green/30 hover:border-admin-new-green hover:shadow-xl hover:shadow-admin-new-green/20 transition-all duration-300">
-            <h3 className="text-sm text-admin-cyan dark:text-admin-cyan-dark font-medium">Current Rama Price (Dollar)</h3>
-            <div className="mt-2">
-              {GlobalData?.globalRama ? (
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${parseFloat(GlobalData.globalRama).toFixed(6)}</p>
-              ) : (
-                <div className="space-y-2">
-                  <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-24"></div>
-                  <p className="text-sm text-gray-500">Loading...</p>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="text-sm text-admin-cyan dark:text-admin-cyan-dark font-medium">Current RAMA Price</h3>
+                <div className="mt-2">
+                  {GlobalData?.globalRama ? (
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">${GlobalData.globalRama} <span className="text-sm text-gray-600">USD</span></p>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-32"></div>
+                      <p className="text-sm text-gray-500">Loading...</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+              <div className="flex-shrink-0 ml-4">
+                <svg className="w-12 h-12 animate-spin" style={{animationDuration: '20s'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280.72 280.48">
+                  <g opacity="0.8">
+                    <path fill="#00D9FF" d="M358.48,185.45A139.71,139.71,0,0,1,430.73,162v56a84,84,0,0,0-39.34,12.77Z" transform="translate(-296 -161.99)" />
+                    <path fill="#00D9FF" d="M304.69,253.53a140.71,140.71,0,0,1,44.68-61.45l32.91,45.29a84.72,84.72,0,0,0-24.34,33.46Z" transform="translate(-296 -161.99)" />
+                  </g>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
