@@ -1,0 +1,54 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <style>
+      @media (prefers-color-scheme: light) {
+        .favicon-bg { fill: rgba(255, 255, 255, 0.3); }
+        .favicon-filter { filter: brightness(0.95) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.1)); }
+      }
+      @media (prefers-color-scheme: dark) {
+        .favicon-bg { fill: transparent; }
+        .favicon-filter { filter: drop-shadow(0 2px 12px rgba(0, 255, 136, 0.3)); }
+      }
+    </style>
+    <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle for light mode -->
+  <circle cx="60" cy="60" r="58" class="favicon-bg" />
+
+  <!-- Favicon content with adaptive filter -->
+  <g class="favicon-filter">
+    <!-- Outer circle -->
+    <circle cx="60" cy="60" r="56" fill="none" stroke="url(#faviconGradient)" stroke-width="1.5" opacity="0.5" />
+    
+    <!-- R Logo -->
+    <g transform="translate(60, 60)">
+      <!-- Vertical stem -->
+      <rect x="-5" y="-24" width="4" height="48" rx="2" fill="url(#faviconGradient)" />
+      
+      <!-- Top curve (bowl) -->
+      <path
+        d="M -1 -16 Q 12 -24 12 -6 Q 12 6 -1 6"
+        stroke="url(#faviconGradient)"
+        stroke-width="3.5"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      
+      <!-- Diagonal leg -->
+      <line
+        x1="2"
+        y1="6"
+        x2="14"
+        y2="24"
+        stroke="url(#faviconGradient)"
+        stroke-width="3.5"
+        stroke-linecap="round"
+      />
+    </g>
+  </g>
+</svg>
