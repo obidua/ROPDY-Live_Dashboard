@@ -24,8 +24,11 @@ const LogoCircleImage = ({ size = 64, className = '' }) => {
         display: 'inline-block',
         filter: isDark 
           ? 'drop-shadow(0 2px 12px rgba(0, 255, 136, 0.3))'
-          : 'drop-shadow(0 2px 8px rgba(0, 102, 112, 0.2))',
+          : 'brightness(0.95) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.1))',
         transition: 'filter 0.3s ease',
+        backgroundColor: isDark ? 'transparent' : 'rgba(255, 255, 255, 0.3)',
+        padding: isDark ? '0' : '4px',
+        borderRadius: '50%',
       }}
     />
   );
