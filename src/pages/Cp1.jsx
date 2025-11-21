@@ -35,7 +35,7 @@ const Cp1 = () => {
     <div className="relative min-h-screen">
       <BlockchainAnimation />
       <div className="relative p-6">
-        <h1 className="text-2xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-6">♻️ CP1 (Direct Payment)</h1>
+        <h1 className="text-2xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-6">                    ♻️ Direct Payments (Earnings Overview)</h1>
 
         {loading ? (
           <RamaLoader />
@@ -54,11 +54,11 @@ const Cp1 = () => {
               value={`${parseFloat(cp1Data[2] || 0).toFixed(5)} RAMA`}
             />
             <StatCard
-              label="💎 Diamond"
+              label="⭐ Platinum"
               value={`${parseFloat(cp1Data[3] || 0).toFixed(5)} RAMA`}
             />
             <StatCard
-              label="⭐ Platinum"
+              label="💎 Diamond"
               value={`${parseFloat(cp1Data[4] || 0).toFixed(5)} RAMA`}
             />
           </div>

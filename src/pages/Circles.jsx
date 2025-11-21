@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import StatCard from '../components/StatCard';
-import NotificationModal from '../components/NotificationModal';
 import BlockchainAnimation from '../components/BlockchainAnimation';
 import CircleDisplay from '../components/CircleDisplay';
 import AddressDisplay from '../components/AddressDisplay';
 import RamaLoader from '../components/RamaLoader';
-import { useNotification } from '../hooks/useNotification';
 import { generateFullHash, mockAddresses } from '../utils/mockData';
 import { useStore } from '../Store/UserStore';
 import Web3 from 'web3';
@@ -15,8 +11,6 @@ const web3 = new Web3();
 
 const Circles = () => {
 
-  const navigate = useNavigate();
-  const { notification, closeNotification, showWarning } = useNotification();
 
   const getActiveCircles = useStore((state) => state.getActiveCircles);
   const ViewDetailedPartner = useStore((state) => state.ViewDetailedPartner);
@@ -145,7 +139,6 @@ const Circles = () => {
 
     console.log('Selected Package:', userAddress, selectedPackage);
 
-    // Always load circles for the selected package
     if (selectedPackage !== null && selectedPackage !== undefined && selectedCircle !== null && selectedCircle !== undefined) getSelectedPkg();
   }, [selectedPackage, selectedCircle])
 
@@ -153,9 +146,6 @@ const Circles = () => {
   useEffect(() => {
 
     const ViewDetails = async () => {
-      // Wait for circleNumbers to be loaded first (it will be populated after getActiveCircles call)
-      // Don't check immediately - only check if we have actually fetched and circleNumbers is empty for non-Starter packages
-      
       setLoading(true);
       setLoadingPercentage(50);
       try {
@@ -165,70 +155,8 @@ const Circles = () => {
 
         setLoadingPercentage(100);
         setMockPosition(res);
-        
-        // Auto-populate circle details after loading
-        if (typeof selectedPackage === 'number' && typeof selectedCircle === 'number') {
-          setViewLoading(true);
-          try {
-            await new Promise(resolve => setTimeout(resolve, 500)); // Min delay
-            const details = getCircleDetails();
-            setCurrentCircle(details);
-            
-            // Get the static USD value for this package (50% of USD price)
-            const selectedPkg = packages.find(p => p.id === selectedPackage);
-            const staticUsdValue = selectedPkg ? (selectedPkg.usdPrice * 50) / 100 : 0; // 50% of USD price
-            
-            // Map positions with payment details
-            const positionsWithPayments = res.map((pos, index) => {
-              const payment = paymentDetails.find(p => p.from === pos.fromAddress);
-              
-              // Convert RAMA from Wei to Ether
-              const ramaValue = payment ? parseFloat(web3.utils.fromWei(payment.netRama || '0', 'ether')) : 0;
-              
-              return {
-                srNo: index + 1,
-                idNumber: pos.userId || 'N/A',
-                address: pos.fromAddress || 'N/A',
-                type: pos.type || 'N/A',
-                ramaAmount: ramaValue.toFixed(4),
-                usdAmount: staticUsdValue.toFixed(2), // Static USD based on 50% of package USD price
-              };
-            });
-            
-            setPositionDetails(positionsWithPayments);
-          } finally {
-            setViewLoading(false);
-          }
-        }
       } catch (error) {
         console.error('Error fetching details:', error);
-        
-        // Check if error is due to unactivated circle
-        const errorMessage = error?.message || '';
-        if (errorMessage.includes('reverted') || errorMessage.includes('execution')) {
-          const selectedPkg = packages.find(p => p.id === selectedPackage);
-          const packageName = selectedPkg ? selectedPkg.name : `Package ${selectedPackage}`;
-          
-          showWarning(
-            '⚠️ Circle Not Activated',
-            `You have not activated the ${packageName} circle yet. Would you like to activate it?`,
-            [
-              {
-                label: 'Yes, Activate Now',
-                onClick: () => navigate('/purchase'),
-                style: 'primary'
-              },
-              {
-                label: 'Cancel',
-                onClick: () => {},
-                style: 'secondary'
-              }
-            ]
-          );
-        } else {
-          showWarning('Error', 'Failed to load circle details. Please try again.');
-        }
-        
         setMockPosition([]);
       } finally {
         setLoading(false);
@@ -238,14 +166,7 @@ const Circles = () => {
 
     console.log("selectedPackage,selectedCircle", selectedPackage, selectedCircle)
 
-    // Only trigger ViewDetails if circleNumbers has been loaded and is not empty
-    // Or if it's the Starter package (which all users have by default)
-    if (selectedPackage !== null && selectedCircle !== null) {
-      // If Starter package (0) or if we have circles for this package, proceed
-      if (selectedPackage === 0 || (circleNumbers && circleNumbers.length > 0)) {
-        ViewDetails();
-      }
-    }
+    if (selectedPackage !== null && selectedCircle !== null) ViewDetails();
   }, [selectedCircle, selectedPackage]);
 
 
@@ -309,16 +230,6 @@ const Circles = () => {
   return (
     <div className="relative min-h-screen">
       <BlockchainAnimation />
-      <NotificationModal
-        isOpen={notification.isOpen}
-        onClose={closeNotification}
-        title={notification.title}
-        message={notification.message}
-        type={notification.type}
-        autoClose={notification.autoClose}
-        autoCloseDuration={notification.autoCloseDuration}
-        actions={notification.actions}
-      />
       <div className="relative p-4 sm:p-6">
         <h1 className="text-2xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-6">🔄 My Circles</h1>
 

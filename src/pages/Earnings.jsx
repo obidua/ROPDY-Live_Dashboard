@@ -95,8 +95,8 @@ const Earnings = () => {
             <div className="bg-black/40 border border-neon-green rounded-xl p-6 shadow-neon mb-10">
               <h2 className="text-xl font-semibold text-neon-green mb-4">📊 Earnings Breakdown</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <StatCard label="CP1 Earnings" value={`${parseFloat(data.cp1Earnings).toFixed(5)} RAMA`} />
-                <StatCard label="CP2 Earnings" value={`${parseFloat(data.cp2Earnings).toFixed(5)} RAMA`} />
+                <StatCard label="Direct Payment Earnings" value={`${parseFloat(data.cp1Earnings).toFixed(5)} RAMA`} />
+                <StatCard label="Random Payment Earnings" value={`${parseFloat(data.cp2Earnings).toFixed(5)} RAMA`} />
                 <StatCard label="MOD1 Earnings" value={`${parseFloat(data.modEarnings[0]).toFixed(5)} RAMA`} />
                 <StatCard label="MOD2 Earnings" value={`${parseFloat(data.modEarnings[1]).toFixed(5)} RAMA`} />
                 <StatCard label="MOD4 Earnings" value={`${parseFloat(data.modEarnings[2]).toFixed(5)} RAMA`} />

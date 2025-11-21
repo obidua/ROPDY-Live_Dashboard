@@ -75,7 +75,7 @@ const Cp2 = () => {
             <BlockchainAnimation />
             <div className="relative p-6">
                 <h1 className="text-2xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-6">
-                    ♻️ CP2 (Earnings Overview)
+                    ♻️ Random Payments (Earnings Overview)
                 </h1>
 
                 {loading ? (

@@ -143,8 +143,8 @@ const Sidebar = () => {
       items: [
         { label: "Settlements", icon: "📥", path: "/settlements" },
         { label: "Earnings", icon: "💰", path: "/earnings" },
-        { label: "CP1 (Direct)", icon: "🧾", path: "/direct-payment" },
-        { label: "CP2 (Random)", icon: "🎲", path: "/random-payment" },
+        { label: "Direct Payments", icon: "🧾", path: "/direct-payment" },
+        { label: "Random Payments", icon: "🎲", path: "/random-payment" },
         { label: "Missed Payments", icon: "🚫", path: "/missed" },
       ]
     },

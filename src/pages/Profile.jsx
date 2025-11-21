@@ -85,7 +85,7 @@ const Profile = () => {
       <div className="relative p-4 sm:p-6">
         <h1 className="text-2xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-6">👤 Profile</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
           <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-5 rounded-lg shadow-lg border border-admin-new-green/30 hover:border-admin-new-green hover:shadow-xl hover:shadow-admin-new-green/20 transition-all duration-300">
             <h3 className="text-base text-admin-cyan dark:text-admin-cyan-dark">Wallet Address</h3>
             <div className="mt-2">
@@ -98,7 +98,6 @@ const Profile = () => {
               <AddressDisplay value={profileData?.sponserAdd || 'N/A'} type="address" />
             </div>
           </div>
-          <StatCard label="Membership Tier" value={profileData?.memberTier || 'N/A'} />
         </div>
 
         <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm rounded-lg p-4 sm:p-6 border border-admin-new-green/30 mb-8">
