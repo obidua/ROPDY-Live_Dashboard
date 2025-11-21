@@ -186,7 +186,7 @@ const Sidebar = () => {
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
-      <aside className={`w-64 h-screen bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm text-gray-900 dark:text-gray-100 shadow-lg fixed border-r border-admin-gold-900/50 transition-transform duration-300 z-50 flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      <aside className={`bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm text-gray-900 dark:text-gray-100 shadow-lg fixed border-r border-admin-gold-900/50 transition-transform duration-300 z-50 flex flex-col h-screen w-full lg:w-64 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
         <div className="p-4 border-b border-admin-gold-900/50 bg-white/50 dark:bg-black/50 backdrop-blur-sm flex-shrink-0">
           <div className="flex items-center justify-between gap-2 sm:gap-3 flex-wrap">
@@ -196,34 +196,44 @@ const Sidebar = () => {
                 ROPDY
               </span>
             </div>
-            {isActive && (address == userAddress) ? (
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-admin-new-green opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-admin-new-green"></span>
-                </span>
+            <div className="flex items-center gap-2">
+              {isMobileMenuOpen && (
                 <button
-                  onClick={handleDisconnect}
-                  className="text-lg text-red-500 hover:text-red-400 transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="lg:hidden text-2xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                 >
-                  ⏻
+                  ✕
                 </button>
-              </div>
-            ) : userAddress ? (
-              <button
-                onClick={handleViewLogout}
-                className="bg-red-600 text-white px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg font-semibold shadow-md hover:bg-red-800/80 transition-colors border border-red-900/30 whitespace-nowrap"
-              >
-                Logout
-              </button>
-            ) : (
-              <button
-                onClick={handleConnect}
-                className="bg-admin-new-green text-white px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg font-semibold shadow-md hover:bg-admin-new-green/80 transition-colors border border-admin-new-green/30 whitespace-nowrap"
-              >
-                Connect
-              </button>
-            )}
+              )}
+              {isActive && (address == userAddress) ? (
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-admin-new-green opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-admin-new-green"></span>
+                  </span>
+                  <button
+                    onClick={handleDisconnect}
+                    className="text-lg text-red-500 hover:text-red-400 transition-colors"
+                  >
+                    ⏻
+                  </button>
+                </div>
+              ) : userAddress ? (
+                <button
+                  onClick={handleViewLogout}
+                  className="bg-red-600 text-white px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg font-semibold shadow-md hover:bg-red-800/80 transition-colors border border-red-900/30 whitespace-nowrap"
+                >
+                  Logout
+                </button>
+              ) : (
+                <button
+                  onClick={handleConnect}
+                  className="bg-admin-new-green text-white px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg font-semibold shadow-md hover:bg-admin-new-green/80 transition-colors border border-admin-new-green/30 whitespace-nowrap"
+                >
+                  Connect
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="mt-2 text-sm">
@@ -259,10 +269,10 @@ const Sidebar = () => {
               <div className="mt-6 pt-4 border-t border-admin-gold-900/50">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center px-4 py-2 rounded-lg transition-colors bg-red-600/20 hover:bg-red-600/40 text-red-500 hover:text-red-400 border border-red-600/30 hover:border-red-600/60"
+                  className="w-full flex items-center justify-center lg:justify-start px-4 py-3 lg:py-2 rounded-lg transition-colors bg-red-600/20 hover:bg-red-600/40 text-red-500 hover:text-red-400 border border-red-600/30 hover:border-red-600/60 font-semibold"
                 >
                   <span className="mr-3 text-lg">🚪</span>
-                  <span className="text-sm font-semibold">Logout</span>
+                  <span className="text-base lg:text-sm">Logout</span>
                 </button>
               </div>
             )}
