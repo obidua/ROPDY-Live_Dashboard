@@ -45,7 +45,7 @@ if (!projectId) {
 export const metadata = {
     name: 'Ropdy',
     description: 'A Decentralized Earning Platform',
-    url: 'https://dapp.ropdy.com',
+    url: typeof window !== 'undefined' ? window.location.origin : 'https://dapp.ropdy.com',
     icons: ['https://avatars.githubusercontent.com/u/179229932']
 }
 

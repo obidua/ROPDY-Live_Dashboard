@@ -119,12 +119,9 @@ const Circles = () => {
       try {
         setLoadingPercentage(25);
         const res = await getActiveCircles(userAddress, selectedPackage);
-        console.log('Circle Data:', res[0]);
 
         const rawData = res[0]; // [0n, 1n, 2n]
         const circleData = rawData.map(Number);
-
-        console.log('Circle Data:', circleData);
 
         setLoadingPercentage(100);
         setCircleNumber(circleData || []);
@@ -137,8 +134,6 @@ const Circles = () => {
       }
     }
 
-    console.log('Selected Package:', userAddress, selectedPackage);
-
     if (selectedPackage !== null && selectedPackage !== undefined && selectedCircle !== null && selectedCircle !== undefined) getSelectedPkg();
   }, [selectedPackage, selectedCircle])
 
@@ -150,7 +145,6 @@ const Circles = () => {
       setLoadingPercentage(50);
       try {
         const res = await ViewDetailedPartner(userAddress, selectedPackage, selectedCircle);
-        console.log('Detailed Circle Data:', res);
         fetchPaymentDetails(userAddress, selectedPackage, selectedCircle)
 
         setLoadingPercentage(100);
@@ -163,8 +157,6 @@ const Circles = () => {
         setLoadingPercentage(0);
       }
     }
-
-    console.log("selectedPackage,selectedCircle", selectedPackage, selectedCircle)
 
     if (selectedPackage !== null && selectedCircle !== null) ViewDetails();
   }, [selectedCircle, selectedPackage]);
@@ -217,12 +209,10 @@ const Circles = () => {
 
   const fetchPaymentDetails = async (userAddress, selectedPackage, selectedCircle) => {
     try {
-      console.log(userAddress, selectedPackage, selectedCircle)
       const res = await getCirclePosPayment(userAddress, selectedPackage, selectedCircle);
-      console.log('Payment Details:', res);
       setPaymentDetails(res || []);
     } catch (error) {
-      console.log(error)
+      console.error('Error fetching payment details:', error);
       setPaymentDetails([]);
     }
   }

@@ -1158,7 +1158,6 @@ export const useStore = create((set, get) => ({
   CircleInfo: async (userAddress) => {
     try {
       if (!userAddress) {
-        console.warn("No user address provided for CircleInfo");
         return {
           pendingCircle: 0,
           completeCircle: 0,
@@ -1167,22 +1166,29 @@ export const useStore = create((set, get) => ({
       }
 
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_VIEW");
-      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(abi, contractAddress);
+      const w3 = getWeb3Instance(); 
+      const contract = new w3.eth.Contract(abi, contractAddress);
 
       // Fetch history for all 5 packages with error handling
       const promises = [];
       for (let i = 0; i < 5; i++) {
         promises.push(
-          contract.methods.getAllCirclePurchaseHistory(userAddress, i).call()
-            .catch(err => {
-              console.warn(`Failed to fetch circle history for package ${i}:`, err.message);
-              return []; // Return empty array if this package fails
-            })
+          (async () => {
+            try {
+              // Check if method exists before calling
+              if (typeof contract.methods.getAllCirclePurchaseHistory !== 'function') {
+                return [];
+              }
+              return await contract.methods.getAllCirclePurchaseHistory(userAddress, i).call();
+            } catch (err) {
+              // Silently handle errors - circle data is optional for dashboard
+              return [];
+            }
+          })()
         );
       }
 
-      const results = await Promise.all(promises); // results is an array of arrays
-      console.log("✅ Raw Circle Results:", results);
+      const results = await Promise.all(promises);
 
       let pendingCircle = 0;
       let completeCircle = 0;
@@ -1199,16 +1205,12 @@ export const useStore = create((set, get) => ({
         }
       });
 
-      const data = {
+      return {
         pendingCircle,
         completeCircle,
         totalCircle: pendingCircle + completeCircle,
       };
-
-      console.log("✅ Processed Circle Data:", data);
-      return data;
     } catch (error) {
-      console.error("❌ Error in CircleInfo:", error);
       // Return default values instead of throwing
       return {
         pendingCircle: 0,

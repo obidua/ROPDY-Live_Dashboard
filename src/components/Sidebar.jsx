@@ -165,6 +165,13 @@ const Sidebar = () => {
     },
   ];
 
+  const handleLogout = async () => {
+    localStorage.removeItem("UserData");
+    await disconnect();
+    setIsActive(false);
+    navigate("/");
+  };
+
   // useEffect(() => {
   //   if (userAddress && address && userAddress !== address) {
   //     handleDisconnect();
@@ -248,6 +255,17 @@ const Sidebar = () => {
                 ))}
               </div>
             ))}
+            {isActive && (address == userAddress) && (
+              <div className="mt-6 pt-4 border-t border-admin-gold-900/50">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center px-4 py-2 rounded-lg transition-colors bg-red-600/20 hover:bg-red-600/40 text-red-500 hover:text-red-400 border border-red-600/30 hover:border-red-600/60"
+                >
+                  <span className="mr-3 text-lg">🚪</span>
+                  <span className="text-sm font-semibold">Logout</span>
+                </button>
+              </div>
+            )}
           </nav>
         </div>
 
