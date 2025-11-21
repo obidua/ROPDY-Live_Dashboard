@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import Web3, { errors } from "web3";
 import Swal from "sweetalert2";
+import { getWeb3Instance, executeWithFallback, initializeRpcManager } from "../utils/rpcManager";
 
 // const Contract = {
 //     "ROPDY_VIEW": "0x158d0C166732557e9dBD9B272430e0bf158FcE95",
@@ -30,12 +31,11 @@ const Contract = {
 };
 
 const fetchContractAbi = async (contractName) => {
+  const apiEndpoint = `https://latest-backendapi.ramascan.com/api/v2/smart-contracts/${Contract[contractName]}`;
+  
   try {
-    const response = await fetch(
-      `https://latest-backendapi.ramascan.com/api/v2/smart-contracts/${Contract[contractName]}`
-    );
+    const response = await fetch(apiEndpoint);
     const data = await response.json();
-    // console.log("proxy Address, contract Address", Contract[contractName], data?.implementations[0].address);
 
     const contractAdress = data?.implementations?.[0]?.address;
 
@@ -51,23 +51,36 @@ const fetchContractAbi = async (contractName) => {
       };
     }
   } catch (error) {
-    console.error("Error fetching contract ABI:", error);
+    console.error("Error fetching contract ABI from API:", error);
+    // If API fails, attempt RPC fallback - will try both RPCs
     throw error;
   }
 };
 
-const INFURA_URL = "https://blockchain.ramestta.com";
-const web3 = new Web3(INFURA_URL);
+// Use the RPC manager for automatic failover support
+// Note: We get web3 instance dynamically in each method to ensure we use the current active RPC
 
 export const useStore = create((set, get) => ({
+  initializeRPC: async () => {
+    // Initialize RPC manager on app startup
+    try {
+      const status = await initializeRpcManager();
+      console.log("RPC Status:", status);
+      return status;
+    } catch (error) {
+      console.error("Failed to initialize RPC manager:", error);
+    }
+  },
+
   getBalance: async (walletAdd) => {
     try {
       if (!walletAdd) {
         throw new Error("Wallet address is required.");
       }
 
-      const balanceWei = await web3.eth.getBalance(walletAdd);
-      const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+      const w3 = getWeb3Instance();
+      const balanceWei = await w3.eth.getBalance(walletAdd);
+      const balanceEth = w3.utils.fromWei(balanceWei, "ether");
 
       return parseFloat(balanceEth).toFixed(4); // Optional: return balance with 4 decimal places
     } catch (error) {
@@ -85,7 +98,7 @@ export const useStore = create((set, get) => ({
 
       const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT");
 
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_ROOT.abi,
         ROPDY_ROOT.contractAddress
       );
@@ -111,7 +124,7 @@ export const useStore = create((set, get) => ({
 
   //         const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT")
 
-  //         const contract = new web3.eth.Contract(ROPDY_ROOT.abi, ROPDY_ROOT.contractAddress);
+  //         const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(ROPDY_ROOT.abi, ROPDY_ROOT.contractAddress);
 
   //         const packagePrice = await contract.methods.getPackagePriceInRAMA(0).call();
 
@@ -171,11 +184,12 @@ export const useStore = create((set, get) => ({
         throw new Error("Invalid Sponsor Address");
       }
 
-      const balanceWei = await web3.eth.getBalance(userAddress);
-      const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+      const w3 = getWeb3Instance();
+      const balanceWei = await w3.eth.getBalance(userAddress);
+      const balanceEth = w3.utils.fromWei(balanceWei, "ether");
 
       const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT");
-      const contract = new web3.eth.Contract(
+      const contract = new w3.eth.Contract(
         ROPDY_ROOT.abi,
         ROPDY_ROOT.contractAddress
       );
@@ -189,7 +203,7 @@ export const useStore = create((set, get) => ({
       const packagePrice = await contract.methods
         .getPackagePriceInRAMA(0)
         .call(); // Starter package
-      const packagePriceEth = web3.utils.fromWei(packagePrice, "ether");
+      const packagePriceEth = w3.utils.fromWei(packagePrice, "ether");
 
       if (parseFloat(packagePriceEth) > parseFloat(balanceEth)) {
         alert("Insufficient funds in your account");
@@ -197,7 +211,7 @@ export const useStore = create((set, get) => ({
       }
 
       const trxData = contract.methods.register(sponserAddress).encodeABI();
-      const gasPrice = await web3.eth.getGasPrice();
+      const gasPrice = await w3.eth.getGasPrice();
 
       // Use BigInt and add 1% buffer
       const priceWithBuffer =
@@ -205,7 +219,7 @@ export const useStore = create((set, get) => ({
 
       let gasLimit;
       try {
-        gasLimit = await web3.eth.estimateGas({
+        gasLimit = await w3.eth.estimateGas({
           from: userAddress,
           to: ROPDY_ROOT.contractAddress,
           value: priceWithBuffer,
@@ -218,7 +232,7 @@ export const useStore = create((set, get) => ({
       }
 
       console.log("Estimated Gas:", gasLimit);
-      const gasCost = web3.utils.fromWei(
+      const gasCost = w3.utils.fromWei(
         (BigInt(gasLimit) * BigInt(gasPrice)).toString(),
         "ether"
       );
@@ -251,7 +265,7 @@ export const useStore = create((set, get) => ({
 
       const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT");
 
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_ROOT.abi,
         ROPDY_ROOT.contractAddress
       );
@@ -270,7 +284,7 @@ export const useStore = create((set, get) => ({
     try {
       const ROPDY_VIEW = await fetchContractAbi("ROPDY_VIEW");
 
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_VIEW.abi,
         ROPDY_VIEW.contractAddress
       );
@@ -292,7 +306,7 @@ export const useStore = create((set, get) => ({
       console.log(userAddress, SelectedPkg, selectedCircle);
       const ROPDY_VIEW = await fetchContractAbi("ROPDY_VIEW");
 
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_VIEW.abi,
         ROPDY_VIEW.contractAddress
       );
@@ -334,7 +348,7 @@ export const useStore = create((set, get) => ({
 
   //         const ROPDY_VIEW = await fetchContractAbi("ROPDY_ROOT")
 
-  //         const contract = new web3.eth.Contract(ROPDY_VIEW.abi, ROPDY_VIEW.contractAddress);
+  //         const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(ROPDY_VIEW.abi, ROPDY_VIEW.contractAddress);
 
   //         const Package = ["Starter Package", "Silver Package", "Gold Package", "Diamond Package", "Platinum Package"]
 
@@ -372,8 +386,9 @@ export const useStore = create((set, get) => ({
   purchaseInfo: async (userAddress) => {
     try {
       // 1. Get wallet balance
-      const balanceWei = await web3.eth.getBalance(userAddress);
-      const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+      const w3 = getWeb3Instance();
+      const balanceWei = await w3.eth.getBalance(userAddress);
+      const balanceEth = w3.utils.fromWei(balanceWei, "ether");
       const currentBalance = parseFloat(balanceEth).toFixed(4);
 
       // 2. Prepare package labels
@@ -390,11 +405,11 @@ export const useStore = create((set, get) => ({
         fetchContractAbi("ROPDY_ROOT"),
         fetchContractAbi("ROPDY_VIEW"),
       ]);
-      const contract = new web3.eth.Contract(
+      const contract = new w3.eth.Contract(
         ROPDY_ROOT.abi,
         ROPDY_ROOT.contractAddress
       );
-      const contract1 = new web3.eth.Contract(
+      const contract1 = new w3.eth.Contract(
         ROPDY_VIEW.abi,
         ROPDY_VIEW.contractAddress
       );
@@ -414,18 +429,18 @@ export const useStore = create((set, get) => ({
       ]);
 
       // 6. Get gas price for estimation
-      const gasPrice = await web3.eth.getGasPrice();
+      const gasPrice = await w3.eth.getGasPrice();
       const trxData = contract.methods.buyPackage(0).encodeABI(); // sample call for gas estimation
 
       // 7. Estimate gas for each package and calculate total required
       const packages = await Promise.all(
         Package.map(async (name, i) => {
           const priceInRama = ramaResults[i];
-          const priceInRamaEth = web3.utils.fromWei(priceInRama, "ether");
+          const priceInRamaEth = w3.utils.fromWei(priceInRama, "ether");
           
           try {
             // Estimate gas cost
-            const estimatedGas = await web3.eth.estimateGas({
+            const estimatedGas = await w3.eth.estimateGas({
               from: userAddress,
               to: ROPDY_ROOT.contractAddress,
               value: priceInRama,
@@ -433,7 +448,7 @@ export const useStore = create((set, get) => ({
             });
             
             const gasCostWei = BigInt(estimatedGas) * BigInt(gasPrice);
-            const gasCostEth = web3.utils.fromWei(gasCostWei.toString(), "ether");
+            const gasCostEth = w3.utils.fromWei(gasCostWei.toString(), "ether");
             const totalRequired = parseFloat(priceInRamaEth) + parseFloat(gasCostEth);
             
             return {
@@ -488,7 +503,7 @@ export const useStore = create((set, get) => ({
   getActivePackages: async (userAddress) => {
     try {
       const ROPDY_VIEW = await fetchContractAbi("ROPDY_VIEW");
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_VIEW.abi,
         ROPDY_VIEW.contractAddress
       );
@@ -507,7 +522,7 @@ export const useStore = create((set, get) => ({
   CircleCount: async (userAddress, selectedPkg) => {
     try {
       const ROPDY_VIEW = await fetchContractAbi("ROPDY_ROOT");
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_VIEW.abi,
         ROPDY_VIEW.contractAddress
       );
@@ -531,7 +546,7 @@ export const useStore = create((set, get) => ({
   getUsrSettlement: async (userAddress, selectedPkg, circleIndex) => {
     try {
       const ROPDY_VIEW = await fetchContractAbi("ROPDY_VIEW");
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_VIEW.abi,
         ROPDY_VIEW.contractAddress
       );
@@ -554,15 +569,15 @@ export const useStore = create((set, get) => ({
         from: data.from,
         to: data.to,
         ramaAmount: parseFloat(
-          web3.utils.fromWei(data.ramaAmount.toString(), "ether")
+          w3.utils.fromWei(data.ramaAmount.toString(), "ether")
         ).toFixed(5),
         usdAmount: parseFloat(Number(data.usdAmount) / 1e6).toFixed(5),
         feeRama: parseFloat(
-          web3.utils.fromWei(data.feeRama.toString(), "ether")
+          w3.utils.fromWei(data.feeRama.toString(), "ether")
         ).toFixed(5),
         feeUSD: parseFloat(Number(data.feeUSD) / 1e6).toFixed(5),
         netRama: parseFloat(
-          web3.utils.fromWei(data.netRama.toString(), "ether")
+          w3.utils.fromWei(data.netRama.toString(), "ether")
         ).toFixed(5),
         netUSD: parseFloat(Number(data.netUSD) / 1e6).toFixed(5),
         paymentType: paymentType[data.paymentType?.toString() || "0"],
@@ -589,7 +604,7 @@ export const useStore = create((set, get) => ({
 
   //         const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT");
 
-  //         const contract = new web3.eth.Contract(ROPDY_ROOT.abi, ROPDY_ROOT.contractAddress);
+  //         const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(ROPDY_ROOT.abi, ROPDY_ROOT.contractAddress);
 
   //         const packagePrice = await contract.methods.getPackagePriceInRAMA(selectedPackageIndex).call();
 
@@ -641,26 +656,27 @@ export const useStore = create((set, get) => ({
   // },
   PurchasePackage: async (userAddress, selectedPackageIndex) => {
     try {
-      const balanceWei = await web3.eth.getBalance(userAddress);
-      const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+      const w3 = getWeb3Instance();
+      const balanceWei = await w3.eth.getBalance(userAddress);
+      const balanceEth = w3.utils.fromWei(balanceWei, "ether");
 
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_ROOT");
-      const contract = new web3.eth.Contract(abi, contractAddress);
+      const contract = new w3.eth.Contract(abi, contractAddress);
 
       const packagePrice = await contract.methods
         .getPackagePriceInRAMA(selectedPackageIndex)
         .call();
-      const packagePriceEth = web3.utils.fromWei(packagePrice, "ether");
+      const packagePriceEth = w3.utils.fromWei(packagePrice, "ether");
 
       const trxData = contract.methods
         .buyPackage(selectedPackageIndex)
         .encodeABI();
-      const gasPrice = await web3.eth.getGasPrice();
+      const gasPrice = await w3.eth.getGasPrice();
 
       let gasLimit;
       try {
         // Estimate gas with the exact package price
-        gasLimit = await web3.eth.estimateGas({
+        gasLimit = await w3.eth.estimateGas({
           from: userAddress,
           to: contractAddress,
           value: packagePrice,
@@ -677,8 +693,8 @@ export const useStore = create((set, get) => ({
       // Calculate total cost: package price + gas fees (for balance check only)
       const gasCost = BigInt(gasLimit) * BigInt(gasPrice);
       const totalCost = BigInt(packagePrice) + gasCost;
-      const totalCostEth = web3.utils.fromWei(totalCost.toString(), "ether");
-      const gasCostEth = web3.utils.fromWei(gasCost.toString(), "ether");
+      const totalCostEth = w3.utils.fromWei(totalCost.toString(), "ether");
+      const gasCostEth = w3.utils.fromWei(gasCost.toString(), "ether");
       
       console.log("Package Price ETH:", packagePriceEth);
       console.log("Gas Cost ETH:", gasCostEth);
@@ -712,7 +728,7 @@ export const useStore = create((set, get) => ({
     try {
       const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT");
 
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_ROOT.abi,
         ROPDY_ROOT.contractAddress
       );
@@ -723,7 +739,7 @@ export const useStore = create((set, get) => ({
           .cp1Earnings(userAddress, i)
           .call();
 
-        const cp1EarnEth = web3.utils.fromWei(cp1Earn, "ether");
+        const cp1EarnEth = w3.utils.fromWei(cp1Earn, "ether");
 
         Cp1DirectData.push(cp1EarnEth);
       }
@@ -739,7 +755,7 @@ export const useStore = create((set, get) => ({
   cp2Earning: async (userAddress) => {
     try {
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_ROOT");
-      const contract = new web3.eth.Contract(abi, contractAddress);
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(abi, contractAddress);
 
       const mod1Earning = [];
       const mod2Earning = [];
@@ -771,9 +787,9 @@ export const useStore = create((set, get) => ({
         const mod4 = results[i * 4 + 2];
         const isMod4 = results[i * 4 + 3];
 
-        mod1Earning.push(web3.utils.fromWei(mod1, "ether"));
-        mod2Earning.push(web3.utils.fromWei(mod2, "ether"));
-        mod4Earning.push(web3.utils.fromWei(mod4, "ether"));
+        mod1Earning.push(w3.utils.fromWei(mod1, "ether"));
+        mod2Earning.push(w3.utils.fromWei(mod2, "ether"));
+        mod4Earning.push(w3.utils.fromWei(mod4, "ether"));
         isMod4PoolData.push(isMod4);
       }
 
@@ -802,7 +818,7 @@ export const useStore = create((set, get) => ({
   MyRefferal: async (userAddress) => {
     try {
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_ROOT"); // or use "ROPDY_VIEW" if intended
-      const contract = new web3.eth.Contract(abi, contractAddress);
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(abi, contractAddress);
 
       const DirectRefferal = await contract.methods
         .getDirectReferrals(userAddress)
@@ -824,7 +840,7 @@ export const useStore = create((set, get) => ({
   getMissedPayments: async (userAddress) => {
     try {
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_ROOT"); // or use "ROPDY_VIEW" if intended
-      const contract = new web3.eth.Contract(abi, contractAddress);
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(abi, contractAddress);
 
       const MissedPayments = await contract.methods
         .getMissedPayments(userAddress)
@@ -841,7 +857,7 @@ export const useStore = create((set, get) => ({
   getDashboardInfo: async (userAddress) => {
     try {
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_VIEW"); // or use "ROPDY_VIEW" if intended
-      const contract = new web3.eth.Contract(abi, contractAddress);
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(abi, contractAddress);
 
       const info = await contract.methods
         .getDashboardDataNew(userAddress)
@@ -866,8 +882,9 @@ export const useStore = create((set, get) => ({
         };
       }
 
+      const w3 = getWeb3Instance();
       const { abi: rootAbi, contractAddress: rootAddress } = await fetchContractAbi("ROPDY_ROOT");
-      const rootContract = new web3.eth.Contract(rootAbi, rootAddress);
+      const rootContract = new w3.eth.Contract(rootAbi, rootAddress);
 
       // Helper function to get downlines recursively
       const getDownlinesAtLevel = async (parentAddress, targetLevel, currentLevel = 0) => {
@@ -956,7 +973,7 @@ export const useStore = create((set, get) => ({
       }
 
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_ROOT");
-      const contract = new web3.eth.Contract(abi, contractAddress);
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(abi, contractAddress);
 
       const totalDownline = await contract.methods
         ._countAllDownlines(address)
@@ -984,7 +1001,7 @@ export const useStore = create((set, get) => ({
   getPackageWiseData: async (address, pkg) => {
     try {
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_VIEW");
-      const contract = new web3.eth.Contract(abi, contractAddress);
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(abi, contractAddress);
 
       const pkgData = await contract.methods
         .getDashboardDataNew(address, pkg)
@@ -997,28 +1014,28 @@ export const useStore = create((set, get) => ({
         totalCirclesStarted: pkgData.totalCirclesStarted.toString(),
         circlesCompleted: pkgData.circlesCompleted.toString(),
         mod4PoolStatus: pkgData.mod4PoolStatus.toString(),
-        cp1Earnings: web3.utils.fromWei(
+        cp1Earnings: w3.utils.fromWei(
           pkgData.cp1Earnings.toString(),
           "ether"
         ),
-        cp2Earnings: web3.utils.fromWei(
+        cp2Earnings: w3.utils.fromWei(
           pkgData.cp2Earnings.toString(),
           "ether"
         ),
         modEarnings: pkgData.modEarnings.map((val) =>
-          web3.utils.fromWei(val.toString(), "ether")
+          w3.utils.fromWei(val.toString(), "ether")
         ),
-        totalRamaEarned: web3.utils.fromWei(
+        totalRamaEarned: w3.utils.fromWei(
           pkgData.totalRamaEarned.toString(),
           "ether"
         ),
-        totalUsdEquivalent: web3.utils.fromWei(
+        totalUsdEquivalent: w3.utils.fromWei(
           pkgData.totalUsdEquivalent.toString(),
           "ether"
         ),
         directReferrals: pkgData.directReferrals.toString(),
         missedPayments: pkgData.missedPayments.toString(),
-        heldFundsRama: web3.utils.fromWei(
+        heldFundsRama: w3.utils.fromWei(
           pkgData.heldFundsRama.toString(),
           "ether"
         ),
@@ -1034,7 +1051,7 @@ export const useStore = create((set, get) => ({
   getPurchaseHistory: async (address) => {
     try {
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_VIEW");
-      const contract = new web3.eth.Contract(abi, contractAddress);
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(abi, contractAddress);
 
       const packagesTag = [
         { name: "Starter", value: 0 },
@@ -1106,7 +1123,7 @@ export const useStore = create((set, get) => ({
     try {
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_VIEW");
 
-      const contract = new web3.eth.Contract(abi, contractAddress);
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(abi, contractAddress);
 
       // Fetch both calls in parallel
       const [info, packageDetails] = await Promise.all([
@@ -1127,7 +1144,7 @@ export const useStore = create((set, get) => ({
         sponserAdd: info.sponsorAddress,
         memberTier: activePackage,
         TotalEarning: Number(
-          web3.utils.fromWei(info.totalRamaEarned, "ether")
+          w3.utils.fromWei(info.totalRamaEarned, "ether")
         ).toFixed(5),
         RefferalCount: info.directReferrals?.toString(),
       };
@@ -1150,7 +1167,7 @@ export const useStore = create((set, get) => ({
       }
 
       const { abi, contractAddress } = await fetchContractAbi("ROPDY_VIEW");
-      const contract = new web3.eth.Contract(abi, contractAddress);
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(abi, contractAddress);
 
       // Fetch history for all 5 packages with error handling
       const promises = [];
@@ -1203,11 +1220,12 @@ export const useStore = create((set, get) => ({
 
   getReqRamaForReg: async (userAddress) => {
     try {
-      const balanceWei = await web3.eth.getBalance(userAddress);
-      const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+      const w3 = getWeb3Instance();
+      const balanceWei = await w3.eth.getBalance(userAddress);
+      const balanceEth = w3.utils.fromWei(balanceWei, "ether");
 
       const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT");
-      const contract = new web3.eth.Contract(
+      const contract = new w3.eth.Contract(
         ROPDY_ROOT.abi,
         ROPDY_ROOT.contractAddress
       );
@@ -1215,7 +1233,7 @@ export const useStore = create((set, get) => ({
       const packagePrice = await contract.methods
         .getPackagePriceInRAMA(0)
         .call(); // Starter package
-      const packagePriceEth = web3.utils.fromWei(packagePrice, "ether");
+      const packagePriceEth = w3.utils.fromWei(packagePrice, "ether");
 
       const value = parseFloat(packagePriceEth).toFixed(5).toString();
 
@@ -1238,7 +1256,7 @@ export const useStore = create((set, get) => ({
   getUserAddress: async (userId) => {
     try {
       const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT");
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_ROOT.abi,
         ROPDY_ROOT.contractAddress
       );
@@ -1260,7 +1278,7 @@ export const useStore = create((set, get) => ({
   CondUserIdAddres: async (data) => {
     try {
       const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT");
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_ROOT.abi,
         ROPDY_ROOT.contractAddress
       );
@@ -1300,15 +1318,15 @@ export const useStore = create((set, get) => ({
   globalStats: async (userAddress) => {
     try {
       const ROPDY_PRICECONV = await fetchContractAbi("ROPDY_PRICECONV");
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_PRICECONV.abi,
         ROPDY_PRICECONV.contractAddress
       );
 
       const globalRama = await contract.methods.getReadableRamaPrice().call();
 
-      const balanceWei = await web3.eth.getBalance(userAddress);
-      const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+      const balanceWei = await w3.eth.getBalance(userAddress);
+      const balanceEth = w3.utils.fromWei(balanceWei, "ether");
 
       const stats = {
         walletBalance: parseFloat(balanceEth).toFixed(4),
@@ -1331,7 +1349,7 @@ export const useStore = create((set, get) => ({
   GetSponserId: async (userAddress) => {
     try {
       const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT");
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_ROOT.abi,
         ROPDY_ROOT.contractAddress
       );
@@ -1368,7 +1386,7 @@ export const useStore = create((set, get) => ({
 
       const ROPDY_ROOT = await fetchContractAbi("ROPDY_ROOT");
 
-      const contract = new web3.eth.Contract(
+      const w3 = getWeb3Instance(); const contract = new w3.eth.Contract(
         ROPDY_ROOT.abi,
         ROPDY_ROOT.contractAddress
       );

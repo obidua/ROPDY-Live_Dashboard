@@ -182,7 +182,7 @@ const Sidebar = () => {
       <aside className={`w-64 h-screen bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm text-gray-900 dark:text-gray-100 shadow-lg fixed border-r border-admin-gold-900/50 transition-transform duration-300 z-50 flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
         <div className="p-4 border-b border-admin-gold-900/50 bg-white/50 dark:bg-black/50 backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-2 sm:gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <LogoCircleImage size={48} />
               <span className="text-lg font-bold tracking-wide text-admin-cyan dark:text-admin-cyan-dark hidden sm:inline">
@@ -203,23 +203,19 @@ const Sidebar = () => {
                 </button>
               </div>
             ) : userAddress ? (
-              (
-                <button
-                  onClick={handleViewLogout}
-                  className="bg-red-600 text-white px-3 py-1.5 text-sm rounded-lg font-semibold shadow-md hover:bg-red-800/80 transition-colors border border-red-900/30"
-                >
-                  Logout
-                </button>
-              )
+              <button
+                onClick={handleViewLogout}
+                className="bg-red-600 text-white px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg font-semibold shadow-md hover:bg-red-800/80 transition-colors border border-red-900/30 whitespace-nowrap"
+              >
+                Logout
+              </button>
             ) : (
-              (
-                <button
-                  onClick={handleConnect}
-                  className="bg-admin-new-green text-white px-3 py-1.5 text-sm rounded-lg font-semibold shadow-md hover:bg-admin-new-green/80 transition-colors border border-admin-new-green/30"
-                >
-                  Connect
-                </button>
-              )
+              <button
+                onClick={handleConnect}
+                className="bg-admin-new-green text-white px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-lg font-semibold shadow-md hover:bg-admin-new-green/80 transition-colors border border-admin-new-green/30 whitespace-nowrap"
+              >
+                Connect
+              </button>
             )}
           </div>
 

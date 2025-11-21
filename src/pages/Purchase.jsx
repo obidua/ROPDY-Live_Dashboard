@@ -483,32 +483,34 @@ const Purchase = () => {
         <h1 className="text-2xl font-bold text-admin-cyan dark:text-admin-cyan-dark mb-6">🛒 Purchase Circle</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          {/* Wallet Balance Card */}
-          <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-5 rounded-lg shadow-lg border border-admin-new-green/30 hover:border-admin-new-green hover:shadow-xl hover:shadow-admin-new-green/20 transition-all duration-300">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="text-sm text-admin-cyan dark:text-admin-cyan-dark font-medium">Wallet Balance</h3>
-                <div className="mt-2">
-                  {isConnected && walletBalance ? (
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{walletBalance} <span className="text-sm text-gray-600">RAMA</span></p>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-32"></div>
-                      <p className="text-sm text-gray-500">Loading...</p>
-                    </div>
-                  )}
+          {/* Wallet Balance Card - Only show when wallet is connected */}
+          {isConnected && (
+            <div className="bg-white/50 dark:bg-gray-900/30 backdrop-blur-sm p-5 rounded-lg shadow-lg border border-admin-new-green/30 hover:border-admin-new-green hover:shadow-xl hover:shadow-admin-new-green/20 transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-sm text-admin-cyan dark:text-admin-cyan-dark font-medium">Wallet Balance</h3>
+                  <div className="mt-2">
+                    {walletBalance ? (
+                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{walletBalance} <span className="text-sm text-gray-600">RAMA</span></p>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-32"></div>
+                        <p className="text-sm text-gray-500">Loading...</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-shrink-0 ml-4">
+                  <svg className="w-12 h-12 animate-spin" style={{animationDuration: '20s'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280.72 280.48">
+                    <g opacity="0.8">
+                      <path fill="#00D9FF" d="M358.48,185.45A139.71,139.71,0,0,1,430.73,162v56a84,84,0,0,0-39.34,12.77Z" transform="translate(-296 -161.99)" />
+                      <path fill="#00D9FF" d="M304.69,253.53a140.71,140.71,0,0,1,44.68-61.45l32.91,45.29a84.72,84.72,0,0,0-24.34,33.46Z" transform="translate(-296 -161.99)" />
+                    </g>
+                  </svg>
                 </div>
               </div>
-              <div className="flex-shrink-0 ml-4">
-                <svg className="w-12 h-12 animate-spin" style={{animationDuration: '20s'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280.72 280.48">
-                  <g opacity="0.8">
-                    <path fill="#00D9FF" d="M358.48,185.45A139.71,139.71,0,0,1,430.73,162v56a84,84,0,0,0-39.34,12.77Z" transform="translate(-296 -161.99)" />
-                    <path fill="#00D9FF" d="M304.69,253.53a140.71,140.71,0,0,1,44.68-61.45l32.91,45.29a84.72,84.72,0,0,0-24.34,33.46Z" transform="translate(-296 -161.99)" />
-                  </g>
-                </svg>
-              </div>
             </div>
-          </div>
+          )}
           
           {/* Active Packages Card */}
           <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 dark:from-slate-900 dark:via-slate-950 dark:to-black backdrop-blur-sm p-5 rounded-lg shadow-xl border border-cyan-500/30 hover:border-cyan-400/50 hover:shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300">

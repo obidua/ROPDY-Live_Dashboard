@@ -10,7 +10,7 @@ const Missed = () => {
   const getMissedPayments = useStore((state) => state.getMissedPayments);
   const userAddress = JSON.parse(localStorage.getItem("UserData") || '{}')?.address;
 
-  const PackageNames = ['Starter', 'Silver', 'Gold', 'Diamond', 'Platinum'];
+  const PackageNames = ['Starter', 'Silver', 'Gold', 'Platinum', 'Diamond'];
 
   useEffect(() => {
     const fetchMissedPayment = async () => {

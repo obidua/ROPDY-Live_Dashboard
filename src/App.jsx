@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import AppRoutes from './routes/AppRoutes';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { initializeRpcManager } from './utils/rpcManager';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { projectId, metadata, networks, wagmiAdapter } from './config'
@@ -18,8 +19,12 @@ const App = () => {
   const isreferral = location.pathname === '/referral';
   const ClaimOwnerNewUser = location.pathname === '/claim-ownership-newUser';
 
-
-
+  // Initialize RPC manager on app load
+  React.useEffect(() => {
+    initializeRpcManager().catch(err => {
+      console.error('Failed to initialize RPC manager:', err);
+    });
+  }, []);
 
   const queryClient = new QueryClient()
 

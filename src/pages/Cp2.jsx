@@ -9,7 +9,7 @@ const Cp2 = () => {
     const [activeTab, setActiveTab] = useState("MOD4");
     const [loading, setLoading] = useState(true);
 
-    const Package = ["Starter", "Silver", "Gold", "Diamond", "Platinum"];
+    const Package = ["Starter", "Silver", "Gold", "Platinum", "Diamond"];
 
     const cp2Earning = useStore((state) => state.cp2Earning);
     const userAddress = JSON.parse(localStorage.getItem("UserData") || '{}')?.address;

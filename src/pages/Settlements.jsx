@@ -77,8 +77,8 @@ const Settlements = () => {
     { id: 0, name: 'Starter' },
     { id: 1, name: 'Silver' },
     { id: 2, name: 'Gold' },
-    { id: 3, name: 'Diamond' },
-    { id: 4, name: 'Platinum' }
+    { id: 3, name: 'Platinum' },
+    { id: 4, name: 'Diamond' }
   ];
 
 
